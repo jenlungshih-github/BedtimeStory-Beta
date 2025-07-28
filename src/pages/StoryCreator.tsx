@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useStoryStore } from '../store/storyStore'
 import { generateStory } from '../services/storyService'
-import { ArrowLeft, Sparkles, Plus, X } from 'lucide-react'
+import { ArrowLeft, Sparkles, Plus, X, Shuffle } from 'lucide-react'
 import { toast } from 'sonner'
 
 const characters = [
@@ -55,6 +55,7 @@ export default function StoryCreator() {
   const [customCharacters, setCustomCharacters] = useState([])
   const [showAddCharacterModal, setShowAddCharacterModal] = useState(false)
   const [newCharacter, setNewCharacter] = useState({ name: '', emoji: '', color: 'bg-pink-100 hover:bg-pink-200' })
+  // Removed showCharacterSelection and randomCharacters as they're no longer needed
 
   // Load custom characters from localStorage on component mount
   useEffect(() => {
@@ -76,6 +77,7 @@ export default function StoryCreator() {
     if (characterParam) {
       setSelectedElement('character', characterParam)
     }
+    // Skip character selection modal - go directly to story creation
   }, [searchParams, setSelectedElement])
 
   // Save custom characters to localStorage whenever they change
@@ -105,6 +107,8 @@ export default function StoryCreator() {
 
   // Combine default and custom characters
   const allCharacters = [...characters, ...customCharacters]
+
+  // Removed character selection modal functions as they're no longer needed
 
   const handleElementSelect = (category: keyof typeof selectedElements, value: string) => {
     setSelectedElement(category, value)
@@ -137,6 +141,21 @@ export default function StoryCreator() {
       setSelectedElement('character', '')
     }
     toast.success('角色已移除！')
+  }
+
+  // Function to randomly select all story elements
+  const handleRandomSelection = () => {
+    const randomCharacter = allCharacters[Math.floor(Math.random() * allCharacters.length)]
+    const randomScene = scenes[Math.floor(Math.random() * scenes.length)]
+    const randomTheme = themes[Math.floor(Math.random() * themes.length)]
+    const randomPlot = plots[Math.floor(Math.random() * plots.length)]
+    
+    setSelectedElement('character', randomCharacter.id)
+    setSelectedElement('scene', randomScene.id)
+    setSelectedElement('theme', randomTheme.id)
+    setSelectedElement('plot', randomPlot.id)
+    
+    toast.success('已隨機選擇故事元素！您可以修改任何選項。')
   }
 
   const handleGenerateStory = async () => {
@@ -214,6 +233,25 @@ export default function StoryCreator() {
       </header>
 
       <div className="max-w-4xl mx-auto space-y-12">
+        {/* Random Selection Button - Moved to Top */}
+        <section className="text-center py-4">
+          <button
+            onClick={handleRandomSelection}
+            disabled={isGenerating}
+            className={`inline-flex items-center gap-3 px-8 py-4 rounded-full text-lg font-bold transition-all duration-300 transform ${
+              !isGenerating
+                ? 'bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white shadow-lg hover:shadow-xl hover:scale-105'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            <Shuffle className="w-6 h-6" />
+            隨機選擇故事元素
+          </button>
+          <p className="text-gray-500 mt-2 text-sm">
+            讓我們為您隨機選擇主角、場景、主題和情節
+          </p>
+        </section>
+
         {/* Character Selection */}
         <section>
           <h2 className="text-2xl font-bold text-gray-700 mb-6 text-center">
@@ -331,34 +369,37 @@ export default function StoryCreator() {
           </div>
         </section>
 
-        {/* Generate Button */}
+        {/* Action Buttons */}
         <section className="text-center py-8">
-          <button
-            onClick={handleGenerateStory}
-            disabled={!isComplete || isGenerating}
-            className={`inline-flex items-center gap-3 px-12 py-6 rounded-full text-2xl font-bold transition-all duration-300 transform ${
-              isComplete && !isGenerating
-                ? 'bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl hover:scale-105'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {isGenerating ? (
-              <>
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                生成中...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-8 h-8" />
-                生成我的故事
-              </>
+          {/* Generate Story Button */}
+          <div>
+            <button
+              onClick={handleGenerateStory}
+              disabled={!isComplete || isGenerating}
+              className={`inline-flex items-center gap-3 px-12 py-6 rounded-full text-2xl font-bold transition-all duration-300 transform ${
+                isComplete && !isGenerating
+                  ? 'bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl hover:scale-105'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-8 h-8" />
+                  生成我的故事
+                </>
+              )}
+            </button>
+            {!isComplete && (
+              <p className="text-gray-500 mt-4">
+                請選擇所有故事元素後再生成故事
+              </p>
             )}
-          </button>
-          {!isComplete && (
-            <p className="text-gray-500 mt-4">
-              請選擇所有故事元素後再生成故事
-            </p>
-          )}
+          </div>
         </section>
       </div>
 
@@ -477,6 +518,8 @@ export default function StoryCreator() {
           </div>
         </div>
       )}
+
+      {/* Character Selection Modal removed - users go directly to story creation */}
     </div>
   )
 }

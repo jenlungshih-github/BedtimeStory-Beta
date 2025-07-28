@@ -1,91 +1,229 @@
 import { StoryElement } from '../store/storyStore'
 
-// Pinyin mapping for common characters
+// Comprehensive Pinyin mapping for all characters in basicZhuyinMap
 const pinyinMap: Record<string, string> = {
-  '小': 'xiǎo',
-  '兔': 'tù',
-  '子': 'zi',
-  '熊': 'xióng',
-  '貓': 'māo',
-  '狗': 'gǒu',
-  '鳥': 'niǎo',
-  '魚': 'yú',
-  '象': 'xiàng',
-  '猴': 'hóu',
-  '豬': 'zhū',
-  '羊': 'yáng',
-  '鴨': 'yā',
-  '老': 'lǎo',
-  '鼠': 'shǔ',
-  '森': 'sēn',
-  '林': 'lín',
-  '海': 'hǎi',
-  '邊': 'biān',
-  '花': 'huā',
-  '園': 'yuán',
-  '城': 'chéng',
-  '堡': 'bǎo',
-  '農': 'nóng',
-  '場': 'chǎng',
-  '太': 'tài',
-  '空': 'kōng',
-  '彩': 'cǎi',
-  '虹': 'hóng',
-  '橋': 'qiáo',
-  '魔': 'mó',
-  '法': 'fǎ',
-  '故': 'gù',
-  '事': 'shì',
-  '朋': 'péng',
-  '友': 'yǒu',
-  '勇': 'yǒng',
-  '氣': 'qì',
-  '分': 'fēn',
-  '享': 'xiǎng',
-  '幫': 'bāng',
-  '助': 'zhù',
-  '他': 'tā',
-  '人': 'rén',
-  '探': 'tàn',
-  '險': 'xiǎn',
-  '學': 'xué',
-  '習': 'xí',
-  '新': 'xīn',
-  '技': 'jì',
-  '能': 'néng',
-  '在': 'zài',
-  '裡': 'lǐ',
-  '遇': 'yù',
-  '到': 'dào',
-  '了': 'le',
-  '一': 'yī',
-  '隻': 'zhī',
-  '迷': 'mí',
-  '路': 'lù',
-  '的': 'de',
-  '動': 'dòng',
-  '物': 'wù',
-  '決': 'jué',
-  '定': 'dìng',
-  '它': 'tā',
-  '找': 'zhǎo',
-  '回': 'huí',
-  '家': 'jiā',
-  '尋': 'xún',
-  '過': 'guò',
-  '程': 'chéng',
-  '中': 'zhōng',
-  '們': 'men',
-  '成': 'chéng',
-  '為': 'wéi',
-  '最': 'zuì',
-  '好': 'hǎo',
-  '起': 'qǐ',
-  '快': 'kuài',
-  '樂': 'lè',
-  '和': 'hé',
-  '困': 'kùn',
-  '難': 'nán'
+  // Numbers
+  '一': 'yī', '二': 'èr', '三': 'sān', '四': 'sì', '五': 'wǔ',
+  '六': 'liù', '七': 'qī', '八': 'bā', '九': 'jiǔ', '十': 'shí',
+  '百': 'bǎi', '千': 'qiān', '萬': 'wàn', '零': 'líng', '兩': 'liǎng',
+  
+  // Basic words
+  '所': 'suǒ', '以': 'yǐ', '就': 'jiù', '會': 'huì', '能': 'néng',
+  '可': 'kě', '要': 'yào', '想': 'xiǎng', '說': 'shuō', '話': 'huà',
+  '聽': 'tīng', '看': 'kàn', '見': 'jiàn', '知': 'zhī', '道': 'dào',
+  '學': 'xué', '習': 'xí', '教': 'jiào', '書': 'shū', '讀': 'dú',
+  '寫': 'xiě', '字': 'zì', '詞': 'cí', '語': 'yǔ', '文': 'wén',
+  
+  // Size and comparison
+  '小': 'xiǎo', '大': 'dà', '中': 'zhōng', '高': 'gāo', '低': 'dī',
+  '長': 'cháng', '短': 'duǎn', '多': 'duō', '少': 'shǎo', '好': 'hǎo',
+  '壞': 'huài', '新': 'xīn', '舊': 'jiù', '快': 'kuài', '慢': 'màn',
+  '早': 'zǎo', '晚': 'wǎn', '美': 'měi', '醜': 'chǒu',
+  
+  // Emotions
+  '愛': 'ài', '喜': 'xǐ', '歡': 'huān', '樂': 'lè', '開': 'kāi',
+  '心': 'xīn', '興': 'xìng', '生': 'shēng', '氣': 'qì', '哭': 'kū',
+  '笑': 'xiào',
+  
+  // Movement
+  '來': 'lái', '去': 'qù', '到': 'dào', '走': 'zǒu', '跑': 'pǎo',
+  '跳': 'tiào', '飛': 'fēi', '游': 'yóu', '泳': 'yǒng', '坐': 'zuò',
+  '站': 'zhàn', '躺': 'tǎng', '睡': 'shuì', '起': 'qǐ', '床': 'chuáng',
+  
+  // Food and drink
+  '吃': 'chī', '喝': 'hē', '食': 'shí', '物': 'wù', '飯': 'fàn',
+  '菜': 'cài', '肉': 'ròu', '魚': 'yú', '蛋': 'dàn', '奶': 'nǎi',
+  '水': 'shuǐ', '茶': 'chá', '咖': 'kā', '啡': 'fēi', '汁': 'zhī',
+  
+  // Family
+  '家': 'jiā', '人': 'rén', '爸': 'bà', '媽': 'mā', '爺': 'yé',
+  '哥': 'gē', '姐': 'jiě', '弟': 'dì', '妹': 'mèi', '朋': 'péng',
+  '友': 'yǒu', '同': 'tóng', '老': 'lǎo', '師': 'shī',
+  
+  // Professions
+  '醫': 'yī', '護': 'hù', '士': 'shì', '警': 'jǐng', '察': 'chá',
+  '司': 'sī', '機': 'jī', '工': 'gōng', '農': 'nóng', '商': 'shāng',
+  
+  // School
+  '校': 'xiào', '班': 'bān', '級': 'jí', '課': 'kè', '堂': 'táng',
+  '室': 'shì', '圖': 'tú', '館': 'guǎn', '操': 'cāo', '場': 'chǎng',
+  '公': 'gōng', '園': 'yuán',
+  
+  // Animals
+  '動': 'dòng', '貓': 'māo', '狗': 'gǒu', '鳥': 'niǎo', '兔': 'tù',
+  '子': 'zi', '熊': 'xióng', '象': 'xiàng', '猴': 'hóu', '豬': 'zhū',
+  '羊': 'yáng', '牛': 'niú', '馬': 'mǎ', '雞': 'jī', '鴨': 'yā',
+  '鵝': 'é', '蟲': 'chóng', '蝴': 'hú', '蝶': 'dié', '蜜': 'mì',
+  '蜂': 'fēng', '螞': 'mǎ', '蟻': 'yǐ', '鼠': 'shǔ',
+  
+  // Plants and nature
+  '花': 'huā', '草': 'cǎo', '樹': 'shù', '葉': 'yè', '根': 'gēn',
+  '枝': 'zhī', '實': 'shí', '種': 'zhòng', '植': 'zhí', '森': 'sēn',
+  '林': 'lín', '山': 'shān', '河': 'hé', '海': 'hǎi', '湖': 'hú',
+  '池': 'chí', '塘': 'táng', '橋': 'qiáo', '路': 'lù', '街': 'jiē',
+  '巷': 'xiàng',
+  
+  // Buildings
+  '門': 'mén', '窗': 'chuāng', '牆': 'qiáng', '屋': 'wū', '房': 'fáng',
+  '廳': 'tīng', '廚': 'chú', '浴': 'yù', '廁': 'cè', '樓': 'lóu',
+  '梯': 'tī', '桌': 'zhuō', '椅': 'yǐ', '沙': 'shā', '發': 'fā',
+  '城': 'chéng', '堡': 'bǎo',
+  
+  // Electronics
+  '電': 'diàn', '視': 'shì', '冰': 'bīng', '箱': 'xiāng', '洗': 'xǐ',
+  '衣': 'yī',
+  
+  // Transportation
+  '車': 'chē', '船': 'chuán', '火': 'huǒ', '汽': 'qì', '共': 'gòng',
+  '捷': 'jié', '運': 'yùn', '腳': 'jiǎo', '踏': 'tà', '計': 'jì',
+  '程': 'chéng', '票': 'piào',
+  
+  // Money
+  '錢': 'qián', '元': 'yuán', '塊': 'kuài', '角': 'jiǎo', '分': 'fēn',
+  '買': 'mǎi', '賣': 'mài', '店': 'diàn', '市': 'shì', '超': 'chāo',
+  '品': 'pǐn',
+  
+  // Directions
+  '東': 'dōng', '西': 'xī', '南': 'nán', '北': 'běi', '左': 'zuǒ',
+  '右': 'yòu', '前': 'qián', '後': 'hòu', '上': 'shàng', '下': 'xià',
+  '裡': 'lǐ', '外': 'wài', '邊': 'biān', '旁': 'páng', '附': 'fù',
+  '近': 'jìn', '遠': 'yuǎn', '對': 'duì', '面': 'miàn', '間': 'jiān',
+  '之': 'zhī', '內': 'nèi', '除': 'chú', '還': 'hái', '也': 'yě',
+  '都': 'dōu', '全': 'quán', '部': 'bù', '許': 'xǔ', '很': 'hěn',
+  '非': 'fēi', '常': 'cháng', '特': 'tè', '別': 'bié', '真': 'zhēn',
+  '正': 'zhèng', '確': 'què', '當': 'dāng', '然': 'rán', '突': 'tū',
+  '忽': 'hū', '立': 'lì', '刻': 'kè', '現': 'xiàn',
+  
+  // Time
+  '今': 'jīn', '天': 'tiān', '明': 'míng', '昨': 'zuó', '年': 'nián',
+  '月': 'yuè', '日': 'rì', '星': 'xīng', '期': 'qī', '週': 'zhōu',
+  '時': 'shí', '候': 'hòu', '鐘': 'zhōng', '秒': 'miǎo', '午': 'wǔ',
+  '夜': 'yè', '點': 'diǎn',
+  
+  // Seasons and weather
+  '春': 'chūn', '夏': 'xià', '秋': 'qiū', '冬': 'dōng', '季': 'jì',
+  '節': 'jié', '晴': 'qíng', '陰': 'yīn', '雨': 'yǔ', '雪': 'xuě',
+  '風': 'fēng', '雲': 'yún', '太': 'tài', '陽': 'yáng', '亮': 'liàng',
+  '空': 'kōng', '地': 'dì', '球': 'qiú',
+  
+  // Countries and places
+  '世': 'shì', '界': 'jiè', '國': 'guó', '鄉': 'xiāng', '村': 'cūn',
+  '鎮': 'zhèn', '區': 'qū', '縣': 'xiàn', '省': 'shěng', '州': 'zhōu',
+  '島': 'dǎo', '洲': 'zhōu', '台': 'tái', '灣': 'wān', '華': 'huá',
+  '民': 'mín', '英': 'yīng', '法': 'fǎ', '德': 'dé', '本': 'běn',
+  '韓': 'hán', '俄': 'é', '印': 'yìn', '度': 'dù', '泰': 'tài',
+  '越': 'yuè', '加': 'jiā', '坡': 'pō', '亞': 'yà', '澳': 'ào',
+  '歐': 'ōu',
+  
+  // Geography
+  '極': 'jí', '赤': 'chì', '熱': 'rè', '帶': 'dài', '溫': 'wēn',
+  '寒': 'hán', '漠': 'mò', '原': 'yuán', '平': 'píng', '盆': 'pén',
+  '丘': 'qiū', '陵': 'líng', '峽': 'xiá', '谷': 'gǔ', '瀑': 'pù',
+  '布': 'bù', '溪': 'xī', '流': 'liú', '江': 'jiāng', '泊': 'pō',
+  '洋': 'yáng', '港': 'gǎng', '嶼': 'yǔ', '庫': 'kù', '壩': 'bà',
+  '樑': 'liáng', '隧': 'suì', '鐵': 'tiě', '速': 'sù', '口': 'kǒu',
+  
+  // Culture and entertainment
+  '院': 'yuàn', '博': 'bó', '術': 'shù', '音': 'yīn', '劇': 'jù',
+  '影': 'yǐng', '體': 'tǐ', '育': 'yù', '遊': 'yóu', '貨': 'huò',
+  '便': 'biàn', '利': 'lì', '餐': 'cān', '酒': 'jiǔ', '吧': 'bā',
+  '網': 'wǎng', '銀': 'yín', '行': 'háng', '郵': 'yóu', '局': 'jú',
+  
+  // Safety and services
+  '消': 'xiāo', '防': 'fáng', '隊': 'duì', '政': 'zhèng', '府': 'fǔ',
+  '戶': 'hù', '事': 'shì', '務': 'wù', '健': 'jiàn', '保': 'bǎo',
+  '稅': 'shuì', '監': 'jiān', '理': 'lǐ', '油': 'yóu', '停': 'tíng',
+  '紅': 'hóng', '綠': 'lǜ', '燈': 'dēng', '斑': 'bān', '線': 'xiàn',
+  '安': 'ān', '帽': 'mào', '救': 'jiù', '急': 'jí', '滅': 'miè',
+  '器': 'qì', '緊': 'jǐn', '出': 'chū', '逃': 'táo', '報': 'bào',
+  '員': 'yuán', '清': 'qīng', '潔': 'jié', '管': 'guǎn', '服': 'fú',
+  '售': 'shòu', '收': 'shōu', '律': 'lǜ', '建': 'jiàn', '築': 'zhù',
+  '設': 'shè', '式': 'shì', '頁': 'yè',
+  
+  // Health and beauty
+  '糕': 'gāo', '髮': 'fà', '按': 'àn', '摩': 'mó', '身': 'shēn',
+  '練': 'liàn', '瑜': 'yú', '珈': 'jiā', '舞': 'wǔ', '蹈': 'dǎo',
+  
+  // Education subjects
+  '數': 'shù', '自': 'zì', '社': 'shè', '歷': 'lì', '史': 'shǐ',
+  '化': 'huà', '科': 'kē', '資': 'zī', '訊': 'xùn', '腦': 'nǎo',
+  '輔': 'fǔ', '導': 'dǎo', '主': 'zhǔ', '任': 'rèn', '組': 'zǔ',
+  '副': 'fù', '紀': 'jì', '股': 'gǔ', '藝': 'yì', '衛': 'wèi',
+  '康': 'kāng',
+  
+  // Story elements
+  '深': 'shēn', '藍': 'lán', '巨': 'jù', '浪': 'làng', '沒': 'méi',
+  '退': 'tuì', '縮': 'suō', '敢': 'gǎn', '向': 'xiàng', '岸': 'àn',
+  '證': 'zhèng', '己': 'jǐ', '通': 'tōng', '次': 'cì', '經': 'jīng',
+  '結': 'jié', '交': 'jiāo', '活': 'huó', '戰': 'zhàn', '挑': 'tiāo',
+  '雖': 'suī', '害': 'hài', '怕': 'pà', '吸': 'xī', '鼓': 'gǔ',
+  '終': 'zhōng', '功': 'gōng', '克': 'kè', '烏': 'wū', '龜': 'guī',
+  '找': 'zhǎo', '寶': 'bǎo', '藏': 'cáng', '誼': 'yì', '掉': 'diào',
+  '輕': 'qīng', '把': 'bǎ', '巢': 'cháo', '感': 'gǎn', '謝': 'xiè',
+  '集': 'jí', '穴': 'xué', '從': 'cóng', '眼': 'yǎn', '手': 'shǒu',
+  '包': 'bāo', '何': 'hé', '辨': 'biàn', '認': 'rèn', '不': 'bù',
+  '掌': 'zhǎng', '握': 'wò', '技': 'jì', '變': 'biàn', '得': 'dé',
+  '更': 'gèng', '信': 'xìn', '住': 'zhù', '隻': 'zhī', '聰': 'cōng',
+  '成': 'chéng', '什': 'shén', '麼': 'me', '誰': 'shéi', '哪': 'nǎ',
+  '怎': 'zěn', '而': 'ér', '且': 'qiě', '者': 'zhě', '及': 'jí',
+  '跟': 'gēn', '像': 'xiàng',
+  
+  // Body parts
+  '臉': 'liǎn', '睛': 'jīng', '鼻': 'bí', '嘴': 'zuǐ', '耳': 'ěr',
+  '肚': 'dù', '背': 'bèi', '胸': 'xiōng', '腰': 'yāo', '腿': 'tuǐ',
+  '膝': 'xī', '蓋': 'gài', '指': 'zhǐ',
+  
+  // Clothing
+  '褲': 'kù', '裙': 'qún', '鞋': 'xié', '襪': 'wà', '鏡': 'jìng',
+  
+  // Actions
+  '拿': 'ná', '抱': 'bào', '抓': 'zhuā', '推': 'tuī', '拉': 'lā',
+  '打': 'dǎ', '踢': 'tī', '丟': 'diū', '撿': 'jiǎn', '刷': 'shuā',
+  '擦': 'cā', '掃': 'sǎo', '拖': 'tuō', '整': 'zhěng', '拾': 'shí',
+  '造': 'zào', '製': 'zhì', '作': 'zuò', '養': 'yǎng', '照': 'zhào',
+  '顧': 'gù',
+  
+  // Qualities
+  '夠': 'gòu', '滿': 'mǎn', '豐': 'fēng', '富': 'fù', '貧': 'pín',
+  '窮': 'qióng', '容': 'róng', '易': 'yì', '簡': 'jiǎn', '複': 'fù',
+  '雜': 'zá', '普': 'pǔ', '錯': 'cuò', '假': 'jiǎ', '虛': 'xū',
+  '危': 'wēi', '靜': 'jìng', '吵': 'chǎo', '鬧': 'nào', '忙': 'máng',
+  '閒': 'xián', '剛': 'gāng', '才': 'cái', '已': 'yǐ', '再': 'zài',
+  '又': 'yòu', '總': 'zǒng', '永': 'yǒng', '始': 'shǐ', '束': 'shù',
+  '完': 'wán', '畢': 'bì', '里': 'lǐ', '辦': 'bàn', '輸': 'shū',
+  '直': 'zhí', '升': 'shēng', '箭': 'jiàn', '板': 'bǎn', '戲': 'xì',
+  '軟': 'ruǎn', '硬': 'yìng', '料': 'liào', '檔': 'dàng', '案': 'àn',
+  '驗': 'yàn',
+  
+  // Story specific words
+  '神': 'shén', '秘': 'mì', '石': 'shí', '善': 'shàn', '故': 'gù',
+  '障': 'zhàng', '黑': 'hēi', '暗': 'àn', '放': 'fàng', '棄': 'qì',
+  '返': 'fǎn', '回': 'huí', '探': 'tàn', '險': 'xiǎn', '木': 'mù',
+  '蘑': 'mó', '菇': 'gū', '魔': 'mó', '奇': 'qí', '妙': 'miào',
+  '冒': 'mào', '迷': 'mí', '決': 'jué', '定': 'dìng', '尋': 'xún',
+  '過': 'guò', '最': 'zuì', '困': 'kùn', '難': 'nán', '著': 'zhe',
+  '修': 'xiū', '遇': 'yù', '勇': 'yǒng', '光': 'guāng', '頭': 'tóu',
+  '努': 'nǔ', '力': 'lì', '棒': 'bàng',
+  
+  // Additional story words
+  '茂': 'mào', '密': 'mì', '幫': 'bāng', '助': 'zhù', '享': 'xiǎng',
+  '麗': 'lì', '朵': 'duǒ', '孤': 'gū', '單': 'dān', '陪': 'péi',
+  '聊': 'liáo', '位': 'wèi', '用': 'yòng', '良': 'liáng', '暖': 'nuǎn',
+  '玩': 'wán', '耍': 'shuǎ', '穫': 'huò', '味': 'wèi', '餓': 'è',
+  '受': 'shòu', '籃': 'lán', '給': 'gěi', '讓': 'ràng', '充': 'chōng',
+  '聲': 'shēng', '需': 'xū', '雄': 'xióng', '夫': 'fū', '病': 'bìng',
+  '休': 'xiū', '息': 'xī', '彩': 'cǎi', '虹': 'hóng', '精': 'jīng',
+  '靈': 'líng', '耐': 'nài', '引': 'yǐn', '送': 'sòng', '禮': 'lǐ',
+  '古': 'gǔ', '隨': 'suí', '傳': 'chuán', '蔬': 'shū', '蘿': 'luó',
+  '蔔': 'bo', '優': 'yōu', '巧': 'qiǎo', '堅': 'jiān', '持': 'chí',
+  '懈': 'xiè', '失': 'shī', '敗': 'bài', '請': 'qǐng', '稍': 'shāo',
+  '試': 'shì', '柔': 'róu', '女': 'nǚ', '性': 'xìng', '親': 'qīn',
+  '切': 'qiē', '男': 'nán', '兒': 'ér', '童': 'tóng', '駕': 'jià',
+  '駛': 'shǐ', '個': 'gè', '這': 'zhè', '發': 'fā', '歷': 'lì',
+  '它': 'tā', '他': 'tā', '她': 'tā', '們': 'men', '為': 'wéi',
+  '和': 'hé', '與': 'yǔ', '或': 'huò', '但': 'dàn', '是': 'shì',
+  '有': 'yǒu', '沒': 'méi', '在': 'zài', '於': 'yú', '從': 'cóng',
+  '到': 'dào', '了': 'le', '的': 'de', '得': 'de', '地': 'de'
 }
 
 // Basic Zhuyin mapping for common Chinese characters
@@ -1005,6 +1143,8 @@ export const getMissingZhuyinSuggestions = (text: string): string[] => {
 export const formatTextWithSettings = (text: string, settings: any): string | string[] => {
   console.log('formatTextWithSettings called with settings:', settings)
   console.log('showPinyin:', settings.showPinyin, 'showZhuyin:', settings.showZhuyin)
+  console.log('pinyinMap available:', !!pinyinMap)
+  console.log('Sample pinyinMap entries:', { '小': pinyinMap['小'], '兔': pinyinMap['兔'], '子': pinyinMap['子'] })
   
   if (!settings.showZhuyin && !settings.showPinyin) {
     if (settings.verticalLayout) {
@@ -1026,26 +1166,20 @@ export const formatTextWithSettings = (text: string, settings: any): string | st
       
       for (const char of fullSentence) {
         if (char.match(/[\u4e00-\u9fff]/)) {
-          if (settings.showPinyin) {
+          console.log(`Processing char: ${char}, showPinyin: ${settings.showPinyin}, pinyinMap[${char}]: ${pinyinMap[char]}`)
+          if (settings.showPinyin && pinyinMap[char]) {
             const pinyin = pinyinMap[char]
-            if (pinyin) {
-              formattedSentence += `<span class="inline-block relative mr-6"><span class="inline-block">${char}</span><span class="absolute left-full top-0 ml-1 text-xs leading-tight">${pinyin}</span></span>`
-            } else {
-              formattedSentence += char
-            }
-          } else if (settings.showZhuyin) {
+            console.log(`Adding pinyin for ${char}: ${pinyin}`)
+            formattedSentence += `<span class="inline-block relative mr-6"><span class="inline-block">${char}</span><span class="absolute left-full top-0 ml-1 text-xs leading-tight">${pinyin}</span></span>`
+          } else if (settings.showZhuyin && combinedMap[char]) {
             const zhuyin = combinedMap[char]
-            if (zhuyin) {
-              // Split zhuyin into individual characters for vertical display
-              const zhuyinChars = zhuyin.split('')
-              const zhuyinSpans = zhuyinChars.map(zhChar => 
-                `<span class="block text-center">${zhChar}</span>`
-              ).join('')
-              
-              formattedSentence += `<span class="inline-block relative mr-8"><span class="inline-block">${char}</span><span class="absolute left-full top-0 ml-1 flex flex-col items-center justify-start h-full text-xs leading-tight">${zhuyinSpans}</span></span>`
-            } else {
-              formattedSentence += char
-            }
+            // Split zhuyin into individual characters for vertical display
+            const zhuyinChars = zhuyin.split('')
+            const zhuyinSpans = zhuyinChars.map(zhChar => 
+              `<span class="block text-center">${zhChar}</span>`
+            ).join('')
+            
+            formattedSentence += `<span class="inline-block relative mr-8"><span class="inline-block">${char}</span><span class="absolute left-full top-0 ml-1 flex flex-col items-center justify-start h-full text-xs leading-tight">${zhuyinSpans}</span></span>`
           } else {
             formattedSentence += char
           }
@@ -1062,27 +1196,21 @@ export const formatTextWithSettings = (text: string, settings: any): string | st
     
     for (const char of text) {
       if (char.match(/[\u4e00-\u9fff]/)) {
-        if (settings.showPinyin) {
+        console.log(`Horizontal - Processing char: ${char}, showPinyin: ${settings.showPinyin}, pinyinMap[${char}]: ${pinyinMap[char]}`)
+        if (settings.showPinyin && pinyinMap[char]) {
           const pinyin = pinyinMap[char]
-          if (pinyin) {
-            // Display pinyin below the character for horizontal layout
-            formattedText += `<span class="inline-block relative mr-4 mb-8"><span class="inline-block">${char}</span><span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 text-xs leading-tight">${pinyin}</span></span>`
-          } else {
-            formattedText += char
-          }
-        } else if (settings.showZhuyin) {
+          console.log(`Horizontal - Adding pinyin for ${char}: ${pinyin}`)
+          // Display pinyin below the character for horizontal layout
+          formattedText += `<span class="inline-block relative mr-4 mb-8"><span class="inline-block">${char}</span><span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 text-xs leading-tight">${pinyin}</span></span>`
+        } else if (settings.showZhuyin && combinedMap[char]) {
           const zhuyin = combinedMap[char]
-          if (zhuyin) {
-            // Split zhuyin into individual characters for vertical display below the character
-            const zhuyinChars = zhuyin.split('')
-            const zhuyinSpans = zhuyinChars.map(zhChar => 
-              `<span class="block text-center">${zhChar}</span>`
-            ).join('')
-            
-            formattedText += `<span class="inline-block relative mr-4 mb-16"><span class="inline-block">${char}</span><span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 flex flex-col items-center justify-start text-xs leading-tight">${zhuyinSpans}</span></span>`
-          } else {
-            formattedText += char
-          }
+          // Split zhuyin into individual characters for vertical display below the character
+          const zhuyinChars = zhuyin.split('')
+          const zhuyinSpans = zhuyinChars.map(zhChar => 
+            `<span class="block text-center">${zhChar}</span>`
+          ).join('')
+          
+          formattedText += `<span class="inline-block relative mr-4 mb-16"><span class="inline-block">${char}</span><span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 flex flex-col items-center justify-start text-xs leading-tight">${zhuyinSpans}</span></span>`
         } else {
           formattedText += char
         }

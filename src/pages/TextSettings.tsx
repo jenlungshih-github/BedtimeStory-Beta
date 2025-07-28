@@ -1,11 +1,19 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, Type } from 'lucide-react'
 import { useTextSettings } from '../hooks/useTextSettings'
 import { formatTextWithSettings, getFontSizeClass } from '../utils/textUtils'
 
 const TextSettings: React.FC = () => {
   const { textSettings, setTextSettings } = useTextSettings()
+  const navigate = useNavigate()
+
+  // Debug: Log when component mounts
+  React.useEffect(() => {
+    console.log('🚀 TextSettings component mounted')
+    console.log('📋 Initial textSettings:', textSettings)
+    console.log('💾 localStorage on mount:', localStorage.getItem('textSettings'))
+  }, [])
 
   const fontSizes = [
     { id: 'small', name: '小', description: '適合年齡較大的孩子' },
@@ -21,11 +29,29 @@ const TextSettings: React.FC = () => {
   }
 
   const handleToggleOption = (option: 'showPinyin' | 'showZhuyin' | 'showEnglish') => {
-    setTextSettings({ [option]: !textSettings[option] })
+    const newValue = !textSettings[option]
+    console.log(`Toggling ${option} to:`, newValue)
+    
+    if (option === 'showPinyin' && newValue) {
+      // When enabling Pinyin, disable Zhuyin
+      setTextSettings({ showPinyin: true, showZhuyin: false })
+    } else if (option === 'showZhuyin' && newValue) {
+      // When enabling Zhuyin, disable Pinyin
+      setTextSettings({ showZhuyin: true, showPinyin: false })
+    } else {
+      // For other options or when disabling
+      setTextSettings({ [option]: newValue })
+    }
   }
 
   const previewText = formatTextWithSettings(sampleText, textSettings)
   const fontSizeClass = getFontSizeClass(textSettings.fontSize)
+
+  // Debug: Show current settings in console
+  React.useEffect(() => {
+    console.log('🎯 TextSettings component - Current textSettings:', textSettings)
+    console.log('📱 TextSettings component - localStorage content:', localStorage.getItem('textSettings'))
+  }, [textSettings])
 
   return (
     <div className="min-h-screen">
@@ -254,14 +280,38 @@ const TextSettings: React.FC = () => {
           </div>
         </section>
 
+        {/* Debug Section */}
+        <section className="mb-8">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
+            <h3 className="font-bold text-gray-700 mb-4">調試信息</h3>
+            <div className="text-sm text-gray-600 space-y-2">
+              <div>當前設置: {JSON.stringify(textSettings)}</div>
+              <div>localStorage內容: {localStorage.getItem('textSettings')}</div>
+              <button
+                onClick={() => {
+                  localStorage.clear()
+                  window.location.reload()
+                }}
+                className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                清除設置並重新載入
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* Save Button */}
         <div className="text-center">
-          <Link
-            to="/story"
+          <button
+            onClick={() => {
+              console.log('💾 Save button clicked, current settings:', textSettings)
+              console.log('💾 localStorage content:', localStorage.getItem('textSettings'))
+              navigate('/')
+            }}
             className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
           >
             保存設置
-          </Link>
+          </button>
         </div>
       </main>
     </div>

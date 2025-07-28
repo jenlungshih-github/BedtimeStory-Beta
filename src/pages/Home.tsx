@@ -86,17 +86,12 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center text-gray-700 mb-12">
             特色功能 🌟
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Link to="/create" className="text-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:scale-105 cursor-pointer">
-              <div className="text-4xl mb-4">🎭</div>
-              <h3 className="font-bold text-gray-700 mb-2">選擇角色</h3>
+              <h3 className="font-bold text-gray-700 mb-2">選擇角色 場景 主題 情節</h3>
               <p className="text-sm text-gray-600">選擇或創造角色</p>
             </Link>
-            <div className="text-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow">
-              <div className="text-4xl mb-4">🏞️</div>
-              <h3 className="font-bold text-gray-700 mb-2">奇妙場景</h3>
-              <p className="text-sm text-gray-600">8個神奇的故事場景</p>
-            </div>
+
             <Link to="/voice-settings" className="text-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:scale-105 cursor-pointer">
               <div className="text-4xl mb-4">🔊</div>
               <h3 className="font-bold text-gray-700 mb-2">語音朗讀</h3>

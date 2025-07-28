@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useStoryStore } from '../store/storyStore'
+import { useTextSettings } from '../hooks/useTextSettings'
 import { generateSpeech } from '../services/storyService'
 import { formatTextWithSettings, getFontSizeClass, getMissingZhuyinSuggestions, autoGenerateZhuyinMapping } from '../utils/textUtils'
 import { ArrowLeft, Play, Pause, Volume2, Settings, Type, RotateCcw, BookOpen, AlertTriangle } from 'lucide-react'
@@ -13,13 +14,14 @@ export default function StoryReader() {
   const {
     currentStory,
     storyHistory,
-    textSettings,
     voiceSettings,
     isPlaying,
     audioProgress,
     setIsPlaying,
     setAudioProgress
   } = useStoryStore()
+  
+  const { textSettings } = useTextSettings()
   
   const [isLoadingAudio, setIsLoadingAudio] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
@@ -155,9 +157,21 @@ export default function StoryReader() {
     )
   }
 
+  // Debug: Check localStorage directly
+  useEffect(() => {
+    const storedSettings = localStorage.getItem('textSettings')
+    console.log('Direct localStorage check:', storedSettings)
+    if (storedSettings) {
+      const parsed = JSON.parse(storedSettings)
+      console.log('Parsed localStorage settings:', parsed)
+    }
+  }, [])
+
   // Re-format text when Zhuyin mapping updates
   console.log('StoryReader textSettings:', textSettings)
+  console.log('About to call formatTextWithSettings with:', { showPinyin: textSettings.showPinyin, showZhuyin: textSettings.showZhuyin })
   const formattedText = formatTextWithSettings(story.content, textSettings)
+  console.log('formatTextWithSettings returned:', typeof formattedText === 'string' ? formattedText.substring(0, 100) + '...' : 'array')
   const fontSizeClass = getFontSizeClass(textSettings.fontSize)
   
   // Force re-render when Zhuyin mapping updates
@@ -195,6 +209,29 @@ export default function StoryReader() {
               >
                 <Type className="w-5 h-5 text-gray-600" />
               </Link>
+              {/* Debug Button */}
+              <button
+                onClick={() => {
+                  console.log('=== DEBUG INFO ===')
+                  console.log('Current textSettings:', textSettings)
+                  console.log('localStorage textSettings:', localStorage.getItem('textSettings'))
+                  
+                  // Test pinyin directly
+                  const testSettings = { ...textSettings, showPinyin: true, showZhuyin: false }
+                  console.log('Testing with forced pinyin settings:', testSettings)
+                  const testResult = formatTextWithSettings('小兔子', testSettings)
+                  console.log('Test result:', testResult)
+                  
+                  // Clear localStorage and reload
+                  if (confirm('Clear localStorage and reload?')) {
+                    localStorage.clear()
+                    window.location.reload()
+                  }
+                }}
+                className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
+              >
+                Debug
+              </button>
               <Link
                 to="/create"
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors"
