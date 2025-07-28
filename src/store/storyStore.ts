@@ -76,7 +76,7 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
   
   // Voice settings
   voiceSettings: {
-    voice: 'gentle-female',
+    voice: 'hkfHEbBvdQFNX4uWHqRF', // Stacy - Sweet and Cute Chinese/English female voice
     pitch: 1.0,
     speed: 1.0
   },

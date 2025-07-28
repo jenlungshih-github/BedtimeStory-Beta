@@ -104,11 +104,11 @@ export const generateStory = (elements: StoryElement, customCharacterName?: stri
 }
 
 // ElevenLabs API configuration
-const ELEVENLABS_API_KEY = 'sk_a04ff7181fae870ce38b127f8654f430fd82d1bc2a8c188c'
 const ELEVENLABS_BASE_URL = '/api/elevenlabs'
 
 // Voice ID mapping
 const voiceIds: Record<string, string> = {
+  'stacy': 'hkfHEbBvdQFNX4uWHqRF', // Stacy - Sweet and Cute Chinese/English female voice
   'gentle-female': 'EXAVITQu4vr4xnSDxMaL', // Bella
   'lively-female': 'ThT5KcBeYPX3keUQqHPh', // Dorothy
   'kind-male': 'VR6AewLTigWG4xSOukaG', // Josh
@@ -120,7 +120,7 @@ const voiceIds: Record<string, string> = {
 export const generateSpeech = async (text: string, voice: string, pitch: number = 1.0, speed: number = 1.0): Promise<Blob> => {
   try {
     // Check if voice is already a voice_id (from ElevenLabs API) or needs mapping
-    const voiceId = voiceIds[voice] || voice || voiceIds['gentle-female']
+    const voiceId = voiceIds[voice] || voice || 'hkfHEbBvdQFNX4uWHqRF' // Default to Stacy
     
     const response = await axios.post(
       `${ELEVENLABS_BASE_URL}/text-to-speech/${voiceId}`,
@@ -203,6 +203,7 @@ export const getAvailableVoices = async () => {
 
 // Legacy function for backward compatibility
 export const getAvailableVoicesSync = () => [
+  { id: 'hkfHEbBvdQFNX4uWHqRF', name: 'Stacy', description: '甜美可愛的中英文女性聲音' },
   { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', description: '溫暖柔和的女性聲音' },
   { id: 'ThT5KcBeYPX3keUQqHPh', name: 'Dorothy', description: '充滿活力的女性聲音' },
   { id: 'VR6AewLTigWG4xSOukaG', name: 'Josh', description: '溫和親切的男性聲音' },
