@@ -4,7 +4,6 @@ interface TextSettings {
   fontSize: string
   showPinyin: boolean
   showZhuyin: boolean
-  showEnglish: boolean
   verticalLayout: boolean
 }
 
@@ -12,7 +11,6 @@ const defaultSettings: TextSettings = {
   fontSize: 'large',
   showPinyin: false,
   showZhuyin: false,
-  showEnglish: false,
   verticalLayout: false
 }
 

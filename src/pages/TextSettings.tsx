@@ -28,7 +28,7 @@ const TextSettings: React.FC = () => {
     setTextSettings({ fontSize: size })
   }
 
-  const handleToggleOption = (option: 'showPinyin' | 'showZhuyin' | 'showEnglish') => {
+  const handleToggleOption = (option: 'showPinyin' | 'showZhuyin') => {
     const newValue = !textSettings[option]
     console.log(`Toggling ${option} to:`, newValue)
     
@@ -174,29 +174,6 @@ const TextSettings: React.FC = () => {
               </div>
             </div>
 
-            {/* English Option */}
-            <div className="bg-white rounded-2xl p-6 shadow-md">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="font-bold text-gray-700 mb-2">英文翻譯 (English)</h3>
-                  <p className="text-gray-600 text-sm mb-3">在中文詞語旁顯示英文翻譯，幫助雙語學習</p>
-                  <div className="text-lg text-gray-700">
-                    示例：小兔子[Little Rabbit]在森林[Forest]裡
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleToggleOption('showEnglish')}
-                  className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
-                    textSettings.showEnglish
-                      ? 'bg-green-500 border-green-500 text-white'
-                      : 'border-gray-300 hover:border-green-400'
-                  }`}
-                >
-                  {textSettings.showEnglish && <Check className="w-6 h-6" />}
-                </button>
-              </div>
-            </div>
-
             {/* Vertical Layout Option */}
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center justify-between">
@@ -274,7 +251,6 @@ const TextSettings: React.FC = () => {
               <li>• <strong>超大字體</strong>：適合3-5歲幼兒，方便閱讀</li>
               <li>• <strong>注音符號</strong>：幫助學習中文發音，適合台灣地區</li>
               <li>• <strong>漢語拼音</strong>：幫助學習普通話發音，適合大陸地區</li>
-              <li>• <strong>英文翻譯</strong>：促進雙語學習，擴展詞彙量</li>
               <li>• 可以同時開啟多個輔助選項，根據孩子需要調整</li>
             </ul>
           </div>

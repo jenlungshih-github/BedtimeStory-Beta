@@ -100,7 +100,7 @@ export default function Home() {
             <Link to="/text-settings" className="text-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:scale-105 cursor-pointer">
               <div className="text-4xl mb-4">📝</div>
               <h3 className="font-bold text-gray-700 mb-2">學習輔助</h3>
-              <p className="text-sm text-gray-600">注音、拼音、英文</p>
+              <p className="text-sm text-gray-600">注音、拼音</p>
             </Link>
           </div>
         </div>
