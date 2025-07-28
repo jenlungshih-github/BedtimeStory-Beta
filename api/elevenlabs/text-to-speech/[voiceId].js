@@ -12,6 +12,13 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Voice ID and text are required' });
   }
 
+  // Check if API key is configured
+  if (!process.env.ELEVENLABS_API_KEY) {
+    return res.status(500).json({ 
+      error: 'ELEVENLABS_API_KEY environment variable is not configured in Vercel. Please add it in your Vercel project settings.' 
+    });
+  }
+
   try {
     const response = await axios.post(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       text,
