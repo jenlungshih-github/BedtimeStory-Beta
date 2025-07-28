@@ -49,6 +49,10 @@ If you see voice generation errors after deploying to Vercel, it's because the E
 1. **API 金鑰無效**: 確認您複製了正確的 API 金鑰
 2. **環境變數未生效**: 確保在設定環境變數後重新部署
 3. **API 配額用盡**: 檢查您的 ElevenLabs 帳戶配額
+4. **Serverless Function 崩潰錯誤**: 如果看到 "This Serverless Function has crashed" 錯誤：
+   - ✅ **已修復**: 將 API 文件中的 `fetch()` 替換為 `axios`
+   - 原因：Vercel 的 Node.js 環境不支持原生 `fetch()` 函數
+   - 解決方案：使用 `axios` 庫進行 HTTP 請求
 
 ### 檢查 API 端點 / Check API Endpoints
 

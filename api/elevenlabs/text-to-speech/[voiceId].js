@@ -1,3 +1,5 @@
+const axios = require('axios');
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -11,36 +13,33 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: 'POST',
+    const response = await axios.post(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      text,
+      model_id: model_id || 'eleven_multilingual_v2',
+      voice_settings: voice_settings || {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        style: 0.5,
+        use_speaker_boost: true
+      }
+    }, {
       headers: {
         'Accept': 'audio/mpeg',
         'Content-Type': 'application/json',
         'xi-api-key': process.env.ELEVENLABS_API_KEY
       },
-      body: JSON.stringify({
-        text,
-        model_id: model_id || 'eleven_multilingual_v2',
-        voice_settings: voice_settings || {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.5,
-          use_speaker_boost: true
-        }
-      })
+      responseType: 'arraybuffer'
     });
 
-    if (!response.ok) {
-      throw new Error(`ElevenLabs API error: ${response.status}`);
-    }
-
-    const audioBuffer = await response.arrayBuffer();
-    
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Length', audioBuffer.byteLength);
-    res.status(200).send(Buffer.from(audioBuffer));
+    res.setHeader('Content-Length', response.data.byteLength);
+    res.status(200).send(Buffer.from(response.data));
   } catch (error) {
     console.error('Error generating speech:', error);
-    res.status(500).json({ error: 'Failed to generate speech' });
+    if (error.response) {
+      res.status(error.response.status).json({ error: `ElevenLabs API error: ${error.response.status}` });
+    } else {
+      res.status(500).json({ error: 'Failed to generate speech' });
+    }
   }
 }
