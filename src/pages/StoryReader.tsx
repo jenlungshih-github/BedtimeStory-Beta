@@ -123,7 +123,8 @@ export default function StoryReader() {
       
       toast.success('語音生成成功！')
     } catch (error) {
-      toast.error('語音生成失敗，請檢查網絡連接')
+      console.error('Voice generation error:', error)
+      toast.error('語音生成失敗。如果是在 Vercel 部署，請確認已在 Vercel 設定中添加 ELEVENLABS_API_KEY 環境變數。')
     } finally {
       setIsLoadingAudio(false)
     }

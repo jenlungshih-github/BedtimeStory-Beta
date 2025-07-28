@@ -33,7 +33,7 @@ export default function VoiceSettings() {
         toast.success('已載入 ElevenLabs 語音選項')
       } catch (error) {
         console.error('Failed to fetch ElevenLabs voices:', error)
-        toast.error('載入語音選項失敗，使用預設選項')
+        toast.error('載入語音選項失敗，使用預設選項。如果是在 Vercel 部署，請檢查 ELEVENLABS_API_KEY 環境變數設定。')
         // Keep using fallback voices
       } finally {
         setIsLoadingVoices(false)
@@ -94,7 +94,8 @@ export default function VoiceSettings() {
       
     } catch (error) {
       setIsPlaying(false)
-      toast.error('語音生成失敗，請檢查網絡連接')
+      console.error('Voice generation error:', error)
+      toast.error('語音生成失敗。如果是在 Vercel 部署，請確認已在 Vercel 設定中添加 ELEVENLABS_API_KEY 環境變數。')
     }
   }
 
