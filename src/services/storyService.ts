@@ -104,7 +104,8 @@ export const generateStory = (elements: StoryElement, customCharacterName?: stri
 }
 
 // ElevenLabs API configuration
-const ELEVENLABS_BASE_URL = '/api/elevenlabs'
+// Use local server for testing - change back to '/api/elevenlabs' for production
+const ELEVENLABS_BASE_URL = 'http://localhost:3001/api/elevenlabs'
 
 // Voice ID mapping
 const voiceIds: Record<string, string> = {
