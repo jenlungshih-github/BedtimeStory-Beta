@@ -171,17 +171,45 @@ export const generateSpeech = async (text: string, voice: string, pitch: number 
     console.log(`✅ API request completed in ${requestTime}ms`);
     console.log(`Response status: ${response.status}`);
     console.log(`Response size: ${response.data.size} bytes`);
+    console.log(`Response type: ${response.data.type}`);
     
-    // Check if response is actually audio data
+    // Enhanced audio data validation
+    if (!response.data) {
+      console.error('❌ No response data received');
+      throw new Error('未收到任何響應數據')
+    }
+    
     if (response.data.size === 0) {
+      console.error('❌ Empty audio data received');
       throw new Error('收到空的音頻數據')
+    }
+    
+    if (response.data.size < 100) {
+      console.warn(`⚠️ Suspiciously small audio file: ${response.data.size} bytes`);
     }
     
     // Verify blob type
     if (response.data.type && !response.data.type.includes('audio')) {
-      console.warn(`Unexpected content type: ${response.data.type}`);
+      console.warn(`⚠️ Unexpected content type: ${response.data.type}`);
+      // Don't throw error, as some servers might not set correct content-type
     }
     
+    // Additional validation for mobile devices
+    if (typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      console.log('📱 Mobile device detected, performing additional audio validation');
+      
+      // Check if blob can be converted to URL (basic validation)
+      try {
+        const testUrl = URL.createObjectURL(response.data);
+        URL.revokeObjectURL(testUrl);
+        console.log('✅ Audio blob URL creation test passed');
+      } catch (urlError) {
+        console.error('❌ Audio blob URL creation failed:', urlError);
+        throw new Error('音頻數據格式錯誤，無法在移動設備上播放')
+      }
+    }
+    
+    console.log('✅ Audio data validation passed');
     return response.data
   } catch (error: any) {
     console.error('❌ Error generating speech:', error)

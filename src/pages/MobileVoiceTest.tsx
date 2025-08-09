@@ -70,9 +70,58 @@ export default function MobileVoiceTest() {
       const apiTime = Date.now() - startTime
       addErrorLog(`✅ API調用成功，耗時: ${apiTime}ms，音頻大小: ${audioBlob.size} bytes`)
       
+      // Enhanced audio blob validation
+      addErrorLog('🔍 開始詳細音頻數據檢測...')
+      
+      // Check blob properties
+      addErrorLog(`音頻類型: ${audioBlob.type || '未知'}`)
+      addErrorLog(`音頻大小: ${audioBlob.size} bytes`)
+      
+      if (audioBlob.size === 0) {
+        addErrorLog('❌ 致命錯誤: 收到空的音頻數據')
+        throw new Error('收到空的音頻數據 - API返回了0字節的響應')
+      }
+      
+      if (audioBlob.size < 100) {
+        addErrorLog(`⚠️ 警告: 音頻文件異常小 (${audioBlob.size} bytes)，可能不是有效的音頻數據`)
+      }
+      
+      // Validate blob type
+      if (!audioBlob.type) {
+        addErrorLog('⚠️ 警告: 音頻數據沒有MIME類型信息')
+      } else if (!audioBlob.type.includes('audio')) {
+        addErrorLog(`⚠️ 警告: 意外的MIME類型 "${audioBlob.type}"，期望audio/*`)
+      }
+      
+      // Try to read first few bytes to validate audio format
+      try {
+        const arrayBuffer = await audioBlob.slice(0, 16).arrayBuffer()
+        const uint8Array = new Uint8Array(arrayBuffer)
+        const header = Array.from(uint8Array).map(b => b.toString(16).padStart(2, '0')).join(' ')
+        addErrorLog(`音頻文件頭: ${header}`)
+        
+        // Check for common audio file signatures
+        const headerStr = Array.from(uint8Array).map(b => String.fromCharCode(b)).join('')
+        if (headerStr.includes('ID3') || uint8Array[0] === 0xFF) {
+          addErrorLog('✅ 檢測到MP3音頻格式標識')
+        } else if (headerStr.includes('RIFF')) {
+          addErrorLog('✅ 檢測到WAV音頻格式標識')
+        } else {
+          addErrorLog('⚠️ 未識別的音頻格式，但可能仍然有效')
+        }
+      } catch (headerError) {
+        addErrorLog(`⚠️ 無法讀取音頻文件頭: ${headerError}`)
+      }
+      
       // Step 3: Create audio URL
-      const audioUrl = URL.createObjectURL(audioBlob)
-      addErrorLog(`✅ 音頻URL創建成功: ${audioUrl.substring(0, 50)}...`)
+      let audioUrl: string
+      try {
+        audioUrl = URL.createObjectURL(audioBlob)
+        addErrorLog(`✅ 音頻URL創建成功: ${audioUrl.substring(0, 50)}...`)
+      } catch (urlError) {
+        addErrorLog(`❌ 音頻URL創建失敗: ${urlError}`)
+        throw new Error(`無法創建音頻URL: ${urlError}`)
+      }
       
       // Step 4: Create audio element with mobile optimizations
       const audio = createMobileAudio(audioUrl)
