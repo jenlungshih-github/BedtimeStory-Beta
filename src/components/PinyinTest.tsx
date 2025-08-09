@@ -14,9 +14,7 @@ const PinyinTest: React.FC = () => {
   
   const formattedText = formatTextWithSettings(testText, testSettings)
   
-  console.log('PinyinTest - testText:', testText)
-  console.log('PinyinTest - testSettings:', testSettings)
-  console.log('PinyinTest - formattedText:', formattedText)
+  // Debug logs removed for performance
   
   return (
     <div className="p-4 border border-gray-300 m-4">

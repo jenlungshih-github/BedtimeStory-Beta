@@ -104,8 +104,10 @@ export const generateStory = (elements: StoryElement, customCharacterName?: stri
 }
 
 // ElevenLabs API configuration
-// Use local server for testing - change back to '/api/elevenlabs' for production
-const ELEVENLABS_BASE_URL = 'http://localhost:3001/api/elevenlabs'
+// Use relative path for production, localhost for development
+const ELEVENLABS_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:3001/api/elevenlabs'
+  : '/api/elevenlabs'
 
 // Voice ID mapping
 const voiceIds: Record<string, string> = {
@@ -142,13 +144,32 @@ export const generateSpeech = async (text: string, voice: string, pitch: number 
           'Accept': 'audio/mpeg',
           'Content-Type': 'application/json'
         },
-        responseType: 'blob'
+        responseType: 'blob',
+        timeout: 30000 // 30 second timeout for mobile networks
       }
     )
     
     return response.data
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating speech:', error)
+    
+    // Handle specific mobile/network errors
+    if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+      throw new Error('網路連線問題，請檢查您的網路連線後重試')
+    }
+    
+    if (error.response?.status === 0 || error.code === 'ECONNABORTED') {
+      throw new Error('連線逾時，請稍後再試')
+    }
+    
+    if (error.response?.status === 401) {
+      throw new Error('語音服務認證失敗，請聯繫管理員')
+    }
+    
+    if (error.response?.status >= 500) {
+      throw new Error('語音服務暫時無法使用，請稍後再試')
+    }
+    
     throw new Error('語音生成失敗，請稍後再試')
   }
 }
@@ -170,14 +191,22 @@ export const fetchElevenLabsVoices = async (): Promise<ElevenLabsVoice[]> => {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 15000 // 15 second timeout for voice list
     })
     
     return response.data.voices || []
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching ElevenLabs voices:', error)
+    
+    // Log specific error for debugging mobile issues
+    if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+      console.warn('Network error fetching voices, using fallback voices')
+    }
+    
     // Return fallback voices if API fails
     return [
+      { voice_id: 'hkfHEbBvdQFNX4uWHqRF', name: 'Stacy', category: 'premade' },
       { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', category: 'premade' },
       { voice_id: 'ThT5KcBeYPX3keUQqHPh', name: 'Dorothy', category: 'premade' },
       { voice_id: 'VR6AewLTigWG4xSOukaG', name: 'Josh', category: 'premade' },

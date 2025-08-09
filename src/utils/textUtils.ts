@@ -1141,10 +1141,7 @@ export const getMissingZhuyinSuggestions = (text: string): string[] => {
 
 // Function to format text with Zhuyin based on settings
 export const formatTextWithSettings = (text: string, settings: any): string | string[] => {
-  console.log('formatTextWithSettings called with settings:', settings)
-  console.log('showPinyin:', settings.showPinyin, 'showZhuyin:', settings.showZhuyin)
-  console.log('pinyinMap available:', !!pinyinMap)
-  console.log('Sample pinyinMap entries:', { '小': pinyinMap['小'], '兔': pinyinMap['兔'], '子': pinyinMap['子'] })
+  // Debug logs removed for performance
   
   if (!settings.showZhuyin && !settings.showPinyin) {
     if (settings.verticalLayout) {
@@ -1166,10 +1163,8 @@ export const formatTextWithSettings = (text: string, settings: any): string | st
       
       for (const char of fullSentence) {
         if (char.match(/[\u4e00-\u9fff]/)) {
-          console.log(`Processing char: ${char}, showPinyin: ${settings.showPinyin}, pinyinMap[${char}]: ${pinyinMap[char]}`)
           if (settings.showPinyin && pinyinMap[char]) {
             const pinyin = pinyinMap[char]
-            console.log(`Adding pinyin for ${char}: ${pinyin}`)
             formattedSentence += `<span class="inline-block relative mr-6"><span class="inline-block">${char}</span><span class="absolute left-full top-0 ml-1 text-xs leading-tight">${pinyin}</span></span>`
           } else if (settings.showZhuyin && combinedMap[char]) {
             const zhuyin = combinedMap[char]
@@ -1196,10 +1191,8 @@ export const formatTextWithSettings = (text: string, settings: any): string | st
     
     for (const char of text) {
       if (char.match(/[\u4e00-\u9fff]/)) {
-        console.log(`Horizontal - Processing char: ${char}, showPinyin: ${settings.showPinyin}, pinyinMap[${char}]: ${pinyinMap[char]}`)
         if (settings.showPinyin && pinyinMap[char]) {
           const pinyin = pinyinMap[char]
-          console.log(`Horizontal - Adding pinyin for ${char}: ${pinyin}`)
           // Display pinyin below the character for horizontal layout
           formattedText += `<span class="inline-block relative mr-4 mb-8"><span class="inline-block">${char}</span><span class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 text-xs leading-tight">${pinyin}</span></span>`
         } else if (settings.showZhuyin && combinedMap[char]) {
