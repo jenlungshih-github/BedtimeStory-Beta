@@ -78,7 +78,7 @@ export default function VoiceSettings() {
       
       // iOS optimizations
       audio.preload = 'metadata'
-      audio.playsInline = true
+      audio.setAttribute('playsinline', 'true')
       audio.crossOrigin = 'anonymous'
       
       audio.onended = () => {

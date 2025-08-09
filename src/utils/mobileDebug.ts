@@ -143,7 +143,7 @@ export const createMobileAudio = (src: string) => {
   // iOS optimizations
   if (isIOS()) {
     audio.preload = 'metadata'
-    audio.playsInline = true
+    audio.setAttribute('playsinline', 'true')
     ;(audio as any).crossOrigin = 'anonymous'
     
     // Additional iOS-specific settings
