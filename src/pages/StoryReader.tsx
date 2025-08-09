@@ -4,6 +4,7 @@ import { useStoryStore } from '../store/storyStore'
 import { useTextSettings } from '../hooks/useTextSettings'
 import { generateSpeech } from '../services/storyService'
 import { formatTextWithSettings, getFontSizeClass, getMissingZhuyinSuggestions, autoGenerateZhuyinMapping } from '../utils/textUtils'
+import { logMobileInfo, testAudioSupport, createMobileAudio, logAudioError, isIOS, isMobile } from '../utils/mobileDebug'
 import { ArrowLeft, Play, Pause, Volume2, Settings, Type, RotateCcw, BookOpen, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -93,8 +94,20 @@ export default function StoryReader() {
         audioRef.current.pause()
         setIsPlaying(false)
       } else {
-        audioRef.current.play()
-        setIsPlaying(true)
+        try {
+          // iOS requires user gesture for audio playback
+          const playPromise = audioRef.current.play()
+          if (playPromise !== undefined) {
+            await playPromise
+          }
+          setIsPlaying(true)
+        } catch (error) {
+          logAudioError(error, 'handlePlayPause')
+          if (error.name === 'NotAllowedError') {
+            toast.error('請點擊播放按鈕來啟動音頻播放（iOS 安全限制）')
+          } else {
+            toast.error('音頻播放失敗，請重試')
+        }
       }
     }
   }
@@ -117,14 +130,45 @@ export default function StoryReader() {
       
       if (audioRef.current) {
         audioRef.current.src = url
-        audioRef.current.play()
-        setIsPlaying(true)
+        audioRef.current.load() // Important for iOS
+        
+        try {
+          // iOS requires user gesture for audio playback
+          const playPromise = audioRef.current.play()
+          if (playPromise !== undefined) {
+            await playPromise
+          }
+          setIsPlaying(true)
+        } catch (playError) {
+          logAudioError(playError, 'generateAudio auto-play')
+          // Don't show error for auto-play failure, just prepare audio
+          setIsPlaying(false)
+        }
       }
       
       toast.success('語音生成成功！')
     } catch (error) {
       console.error('Voice generation error:', error)
-      toast.error('語音生成失敗。如果是在 Vercel 部署，請確認已在 Vercel 設定中添加 ELEVENLABS_API_KEY 環境變數。')
+      
+      // Enhanced error handling for mobile
+      let errorMessage = '語音生成失敗'
+      
+      if (error.response) {
+        const status = error.response.status
+        if (status === 401) {
+          errorMessage = 'API 金鑰無效，請檢查 ELEVENLABS_API_KEY 設定'
+        } else if (status === 429) {
+          errorMessage = 'API 請求過於頻繁，請稍後再試'
+        } else if (status >= 500) {
+          errorMessage = '服務器錯誤，請稍後再試'
+        }
+      } else if (error.code === 'NETWORK_ERROR') {
+        errorMessage = '網絡連接失敗，請檢查網絡設定'
+      } else if (error.code === 'TIMEOUT') {
+        errorMessage = '請求超時，請檢查網絡連接'
+      }
+      
+      toast.error(errorMessage)
     } finally {
       setIsLoadingAudio(false)
     }
@@ -158,8 +202,19 @@ export default function StoryReader() {
     )
   }
 
-  // Debug: Check localStorage directly
+  // Mobile debugging and audio support detection
   useEffect(() => {
+    if (isMobile()) {
+      logMobileInfo()
+      testAudioSupport().then(results => {
+        console.log('Audio support results:', results)
+        if (results.errors.length > 0) {
+          console.warn('Audio support issues detected:', results.errors)
+        }
+      })
+    }
+    
+    // Debug: Check localStorage directly
     const storedSettings = localStorage.getItem('textSettings')
     console.log('Direct localStorage check:', storedSettings)
     if (storedSettings) {
@@ -210,29 +265,48 @@ export default function StoryReader() {
               >
                 <Type className="w-5 h-5 text-gray-600" />
               </Link>
-              {/* Debug Button */}
-              <button
-                onClick={() => {
-                  console.log('=== DEBUG INFO ===')
-                  console.log('Current textSettings:', textSettings)
-                  console.log('localStorage textSettings:', localStorage.getItem('textSettings'))
-                  
-                  // Test pinyin directly
-                  const testSettings = { ...textSettings, showPinyin: true, showZhuyin: false }
-                  console.log('Testing with forced pinyin settings:', testSettings)
-                  const testResult = formatTextWithSettings('小兔子', testSettings)
-                  console.log('Test result:', testResult)
-                  
-                  // Clear localStorage and reload
-                  if (confirm('Clear localStorage and reload?')) {
-                    localStorage.clear()
-                    window.location.reload()
-                  }
-                }}
-                className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
-              >
-                Debug
-              </button>
+              {/* Mobile Debug Button */}
+              {isMobile() && (
+                <button
+                  onClick={async () => {
+                    console.log('=== MOBILE DEBUG INFO ===')
+                    console.log('Current textSettings:', textSettings)
+                    console.log('localStorage textSettings:', localStorage.getItem('textSettings'))
+                    
+                    // Mobile-specific debugging
+                    const mobileInfo = logMobileInfo()
+                    const audioSupport = await testAudioSupport()
+                    
+                    // Test audio creation
+                    try {
+                      const testAudio = createMobileAudio('')
+                      console.log('Test audio created:', testAudio)
+                    } catch (e) {
+                      console.error('Test audio creation failed:', e)
+                    }
+                    
+                    // Show debug info in alert for mobile
+                    const debugInfo = `
+設備: ${isIOS() ? 'iOS' : isMobile() ? 'Mobile' : 'Desktop'}
+瀏覽器: ${navigator.userAgent.split(' ').pop()}
+音頻支持: ${audioSupport.htmlAudio ? '✓' : '✗'}
+MP3支持: ${audioSupport.formats.mp3 ? '✓' : '✗'}
+自動播放: ${audioSupport.autoplay ? '✓' : '✗'}
+錯誤數量: ${audioSupport.errors.length}
+                    `
+                    alert(debugInfo)
+                    
+                    // Clear localStorage and reload option
+                    if (confirm('清除本地存儲並重新加載？')) {
+                      localStorage.clear()
+                      window.location.reload()
+                    }
+                  }}
+                  className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                >
+                  📱
+                </button>
+              )}
               <Link
                 to="/create"
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -321,8 +395,15 @@ export default function StoryReader() {
         </div>
       </div>
 
-      {/* Hidden Audio Element */}
-      <audio ref={audioRef} preload="none" />
+      {/* Hidden Audio Element with iOS optimizations */}
+      <audio 
+        ref={audioRef} 
+        preload="metadata"
+        playsInline
+        controls={false}
+        muted={false}
+        crossOrigin="anonymous"
+      />
       
 
       

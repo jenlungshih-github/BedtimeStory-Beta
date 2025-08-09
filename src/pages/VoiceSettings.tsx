@@ -76,26 +76,71 @@ export default function VoiceSettings() {
       const audioUrl = URL.createObjectURL(audioBlob)
       const audio = new Audio(audioUrl)
       
+      // iOS optimizations
+      audio.preload = 'metadata'
+      audio.playsInline = true
+      audio.crossOrigin = 'anonymous'
+      
       audio.onended = () => {
         setIsPlaying(false)
         setCurrentAudio(null)
         URL.revokeObjectURL(audioUrl)
       }
       
-      audio.onerror = () => {
+      audio.onerror = (e) => {
         setIsPlaying(false)
         setCurrentAudio(null)
-        toast.error('語音播放失敗')
+        console.error('Audio error:', e)
+        toast.error('語音播放失敗，請重試')
         URL.revokeObjectURL(audioUrl)
       }
       
       setCurrentAudio(audio)
-      await audio.play()
+      
+      try {
+        // iOS requires user gesture for audio playback
+        const playPromise = audio.play()
+        if (playPromise !== undefined) {
+          await playPromise
+        }
+      } catch (playError) {
+        console.error('Audio play error:', playError)
+        setIsPlaying(false)
+        setCurrentAudio(null)
+        
+        if (playError.name === 'NotAllowedError') {
+          toast.error('請點擊播放按鈕來啟動音頻播放（iOS 安全限制）')
+        } else {
+          toast.error('音頻播放失敗，請重試')
+        }
+        
+        URL.revokeObjectURL(audioUrl)
+        return
+      }
       
     } catch (error) {
       setIsPlaying(false)
       console.error('Voice generation error:', error)
-      toast.error('語音生成失敗。如果是在 Vercel 部署，請確認已在 Vercel 設定中添加 ELEVENLABS_API_KEY 環境變數。')
+      
+      // Enhanced error handling for mobile
+      let errorMessage = '語音生成失敗'
+      
+      if (error.response) {
+        const status = error.response.status
+        if (status === 401) {
+          errorMessage = 'API 金鑰無效，請檢查 ELEVENLABS_API_KEY 設定'
+        } else if (status === 429) {
+          errorMessage = 'API 請求過於頻繁，請稍後再試'
+        } else if (status >= 500) {
+          errorMessage = '服務器錯誤，請稍後再試'
+        }
+      } else if (error.code === 'NETWORK_ERROR') {
+        errorMessage = '網絡連接失敗，請檢查網絡設定'
+      } else if (error.code === 'TIMEOUT') {
+        errorMessage = '請求超時，請檢查網絡連接'
+      }
+      
+      toast.error(errorMessage)
     }
   }
 
