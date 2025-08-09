@@ -107,6 +107,7 @@ export default function StoryReader() {
             toast.error('請點擊播放按鈕來啟動音頻播放（iOS 安全限制）')
           } else {
             toast.error('音頻播放失敗，請重試')
+          }
         }
       }
     }
