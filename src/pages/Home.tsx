@@ -102,6 +102,11 @@ export default function Home() {
               <h3 className="font-bold text-gray-700 mb-2">學習輔助</h3>
               <p className="text-sm text-gray-600">注音、拼音</p>
             </Link>
+            <Link to="/mobile-voice-test" className="text-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:scale-105 cursor-pointer border-2 border-orange-200">
+              <div className="text-4xl mb-4">📱</div>
+              <h3 className="font-bold text-gray-700 mb-2">移動端測試</h3>
+              <p className="text-sm text-gray-600">iPhone語音診斷</p>
+            </Link>
           </div>
         </div>
       </section>

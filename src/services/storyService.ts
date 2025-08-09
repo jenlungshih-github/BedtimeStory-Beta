@@ -122,38 +122,84 @@ const voiceIds: Record<string, string> = {
 
 export const generateSpeech = async (text: string, voice: string, pitch: number = 1.0, speed: number = 1.0): Promise<Blob> => {
   try {
+    // Check network connectivity
+    if (!navigator.onLine) {
+      throw new Error('設備離線，請檢查網絡連接')
+    }
+    
     // Check if voice is already a voice_id (from ElevenLabs API) or needs mapping
     const voiceId = voiceIds[voice] || voice || 'hkfHEbBvdQFNX4uWHqRF' // Default to Stacy
     
+    console.log(`🔊 Generating speech for text: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
+    console.log(`Voice ID: ${voiceId}, Pitch: ${pitch}, Speed: ${speed}`);
+    console.log(`API URL: ${ELEVENLABS_BASE_URL}/text-to-speech/${voiceId}`);
+    
+    const requestConfig = {
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json'
+      },
+      responseType: 'blob' as const,
+      timeout: 30000, // 30 second timeout for mobile networks
+      // Add retry configuration for mobile networks
+      validateStatus: (status: number) => status < 500, // Don't throw for 4xx errors
+    }
+    
+    const requestData = {
+      text,
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        style: 0.5,
+        use_speaker_boost: true,
+        pitch: pitch,
+        speed: speed
+      }
+    }
+    
+    console.log('📤 Sending request to ElevenLabs API...');
+    const startTime = Date.now();
+    
     const response = await axios.post(
       `${ELEVENLABS_BASE_URL}/text-to-speech/${voiceId}`,
-      {
-        text,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.5,
-          use_speaker_boost: true,
-          pitch: pitch,
-          speed: speed
-        }
-      },
-      {
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json'
-        },
-        responseType: 'blob',
-        timeout: 30000 // 30 second timeout for mobile networks
-      }
+      requestData,
+      requestConfig
     )
+    
+    const requestTime = Date.now() - startTime;
+    console.log(`✅ API request completed in ${requestTime}ms`);
+    console.log(`Response status: ${response.status}`);
+    console.log(`Response size: ${response.data.size} bytes`);
+    
+    // Check if response is actually audio data
+    if (response.data.size === 0) {
+      throw new Error('收到空的音頻數據')
+    }
+    
+    // Verify blob type
+    if (response.data.type && !response.data.type.includes('audio')) {
+      console.warn(`Unexpected content type: ${response.data.type}`);
+    }
     
     return response.data
   } catch (error: any) {
-    console.error('Error generating speech:', error)
+    console.error('❌ Error generating speech:', error)
     
-    // Handle specific mobile/network errors
+    // Log detailed error information for debugging
+    if (error.response) {
+      console.error('Response status:', error.response.status)
+      console.error('Response headers:', error.response.headers)
+      console.error('Response data:', error.response.data)
+    }
+    
+    if (error.config) {
+      console.error('Request URL:', error.config.url)
+      console.error('Request method:', error.config.method)
+      console.error('Request timeout:', error.config.timeout)
+    }
+    
+    // Handle specific mobile/network errors with detailed messages
     if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
       throw new Error('網路連線問題，請檢查您的網路連線後重試')
     }
@@ -162,14 +208,49 @@ export const generateSpeech = async (text: string, voice: string, pitch: number 
       throw new Error('連線逾時，請稍後再試')
     }
     
-    if (error.response?.status === 401) {
-      throw new Error('語音服務認證失敗，請聯繫管理員')
+    if (error.code === 'TIMEOUT' || error.message?.includes('timeout')) {
+      throw new Error('請求超時，請檢查網絡連接或稍後再試')
     }
     
-    if (error.response?.status >= 500) {
-      throw new Error('語音服務暫時無法使用，請稍後再試')
+    // Handle HTTP errors
+    if (error.response) {
+      const status = error.response.status
+      
+      if (status === 401) {
+        throw new Error('語音服務認證失敗，請檢查API密鑰設定')
+      }
+      
+      if (status === 403) {
+        throw new Error('無權限訪問語音服務，請檢查API密鑰')
+      }
+      
+      if (status === 429) {
+        throw new Error('API請求過於頻繁，請稍後再試')
+      }
+      
+      if (status === 422) {
+        throw new Error('請求參數錯誤，請檢查文本內容')
+      }
+      
+      if (status >= 500) {
+        throw new Error('語音服務暫時無法使用，請稍後再試')
+      }
+      
+      if (status >= 400) {
+        throw new Error(`語音服務錯誤 (${status})，請稍後再試`)
+      }
     }
     
+    // Handle other errors
+    if (error.message?.includes('設備離線')) {
+      throw error // Re-throw network offline error
+    }
+    
+    if (error.message?.includes('收到空的音頻數據')) {
+      throw error // Re-throw empty data error
+    }
+    
+    // Generic fallback error
     throw new Error('語音生成失敗，請稍後再試')
   }
 }

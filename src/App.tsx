@@ -6,6 +6,7 @@ import StoryReader from './pages/StoryReader'
 import VoiceSettings from './pages/VoiceSettings'
 import TextSettings from './pages/TextSettings'
 import CharacterSelection from './pages/CharacterSelection'
+import MobileVoiceTest from './pages/MobileVoiceTest'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/voice-settings" element={<VoiceSettings />} />
           <Route path="/text-settings" element={<TextSettings />} />
           <Route path="/character-selection" element={<CharacterSelection />} />
+          <Route path="/mobile-voice-test" element={<MobileVoiceTest />} />
         </Routes>
         <Toaster position="top-center" richColors />
       </div>

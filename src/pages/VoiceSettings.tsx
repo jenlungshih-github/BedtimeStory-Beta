@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useStoryStore } from '../store/storyStore'
 import { getAvailableVoices, generateSpeech, getAvailableVoicesSync } from '../services/storyService'
-import { ArrowLeft, Play, Volume2, Loader2 } from 'lucide-react'
+import { ArrowLeft, Play, Volume2, Loader2, Smartphone, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
+import { isIOS, isMobile, logMobileInfo, testAudioSupport } from '../utils/mobileDebug'
 
 const sampleText = '小兔子在森林裡遇到了一隻迷路的小鳥，決定幫助它找到回家的路。'
 
@@ -65,13 +66,26 @@ export default function VoiceSettings() {
 
     setIsPlaying(true)
     
+    // Log mobile info for debugging
+    if (isMobile()) {
+      console.log('📱 Mobile device detected, logging debug info:')
+      logMobileInfo()
+    }
+    
     try {
+      // Check network connectivity first
+      if (!navigator.onLine) {
+        throw new Error('設備離線，請檢查網絡連接')
+      }
+      
       const audioBlob = await generateSpeech(
         sampleText,
         voiceSettings.voice,
         voiceSettings.pitch,
         voiceSettings.speed
       )
+      
+      console.log(`✅ Audio blob generated successfully, size: ${audioBlob.size} bytes`)
       
       const audioUrl = URL.createObjectURL(audioBlob)
       const audio = new Audio(audioUrl)
@@ -81,66 +95,120 @@ export default function VoiceSettings() {
       audio.setAttribute('playsinline', 'true')
       audio.crossOrigin = 'anonymous'
       
+      // Additional mobile optimizations
+      if (isMobile()) {
+        audio.load() // Preload on mobile
+      }
+      
+      audio.onloadstart = () => console.log('🔄 Audio loading started')
+      audio.onloadedmetadata = () => console.log(`✅ Audio metadata loaded, duration: ${audio.duration}s`)
+      audio.oncanplay = () => console.log('✅ Audio can start playing')
+      audio.oncanplaythrough = () => console.log('✅ Audio can play through')
+      
       audio.onended = () => {
+        console.log('✅ Audio playback ended')
         setIsPlaying(false)
         setCurrentAudio(null)
         URL.revokeObjectURL(audioUrl)
       }
       
       audio.onerror = (e) => {
+        console.error('❌ Audio error:', e)
         setIsPlaying(false)
         setCurrentAudio(null)
-        console.error('Audio error:', e)
-        toast.error('語音播放失敗，請重試')
+        
+        let errorMsg = '語音播放失敗'
+        if (audio.error) {
+          switch (audio.error.code) {
+            case 1: errorMsg = '音頻加載被中止'; break
+            case 2: errorMsg = '網絡錯誤'; break
+            case 3: errorMsg = '音頻解碼失敗'; break
+            case 4: errorMsg = '音頻格式不支持'; break
+            default: errorMsg = `音頻錯誤 (代碼: ${audio.error.code})`
+          }
+        }
+        
+        toast.error(errorMsg)
         URL.revokeObjectURL(audioUrl)
       }
+      
+      audio.onstalled = () => console.log('⚠️ Audio loading stalled')
+      audio.onsuspend = () => console.log('⚠️ Audio loading suspended')
+      audio.onwaiting = () => console.log('⚠️ Audio waiting for data')
       
       setCurrentAudio(audio)
       
       try {
+        console.log('🎵 Attempting to play audio...')
         // iOS requires user gesture for audio playback
         const playPromise = audio.play()
         if (playPromise !== undefined) {
           await playPromise
+          console.log('✅ Audio playback started successfully')
         }
-      } catch (playError) {
-        console.error('Audio play error:', playError)
+      } catch (playError: any) {
+        console.error('❌ Audio play error:', playError)
         setIsPlaying(false)
         setCurrentAudio(null)
         
+        let errorMessage = '音頻播放失敗'
+        
         if (playError.name === 'NotAllowedError') {
-          toast.error('請點擊播放按鈕來啟動音頻播放（iOS 安全限制）')
+          errorMessage = 'iOS需要用戶手勢才能播放音頻，請點擊播放按鈕'
+          if (isIOS()) {
+            toast.error('iOS安全限制：請確保在用戶點擊後播放音頻')
+          } else {
+            toast.error('瀏覽器阻止自動播放，請點擊播放按鈕')
+          }
+        } else if (playError.name === 'NotSupportedError') {
+          errorMessage = '音頻格式不支持'
+          toast.error('您的設備不支持此音頻格式')
+        } else if (playError.name === 'AbortError') {
+          errorMessage = '播放被中止'
+          toast.error('音頻播放被中止，請重試')
         } else {
-          toast.error('音頻播放失敗，請重試')
+          toast.error(`播放失敗: ${playError.message}`)
         }
         
+        console.error(`Play error details: ${playError.name} - ${playError.message}`)
         URL.revokeObjectURL(audioUrl)
         return
       }
       
-    } catch (error) {
+    } catch (error: any) {
       setIsPlaying(false)
-      console.error('Voice generation error:', error)
+      console.error('❌ Voice generation error:', error)
       
       // Enhanced error handling for mobile
       let errorMessage = '語音生成失敗'
       
       if (error.response) {
         const status = error.response.status
+        console.error(`HTTP Error: ${status}`, error.response.data)
+        
         if (status === 401) {
           errorMessage = 'API 金鑰無效，請檢查 ELEVENLABS_API_KEY 設定'
         } else if (status === 429) {
           errorMessage = 'API 請求過於頻繁，請稍後再試'
         } else if (status >= 500) {
           errorMessage = '服務器錯誤，請稍後再試'
+        } else if (status === 0) {
+          errorMessage = '網絡連接失敗，請檢查網絡設定'
         }
-      } else if (error.code === 'NETWORK_ERROR') {
+      } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
         errorMessage = '網絡連接失敗，請檢查網絡設定'
-      } else if (error.code === 'TIMEOUT') {
+      } else if (error.code === 'TIMEOUT' || error.code === 'ECONNABORTED') {
         errorMessage = '請求超時，請檢查網絡連接'
+      } else if (error.message?.includes('設備離線')) {
+        errorMessage = error.message
       }
       
-      toast.error(errorMessage)
+      // Show mobile-specific help
+      if (isMobile()) {
+        toast.error(errorMessage + '\n\n如果問題持續，請嘗試移動端測試頁面進行診斷')
+      } else {
+        toast.error(errorMessage)
+      }
     }
   }
 
@@ -162,6 +230,28 @@ export default function VoiceSettings() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* Mobile Diagnostic Alert */}
+        {isMobile() && (
+          <div className="mb-8 p-4 bg-orange-50 border-2 border-orange-200 rounded-2xl">
+            <div className="flex items-start gap-3">
+              <Smartphone className="w-6 h-6 text-orange-500 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-bold text-orange-800 mb-2">移動設備檢測到</h3>
+                <p className="text-sm text-orange-700 mb-3">
+                  如果語音播放遇到問題，這可能是由於iOS Safari的音頻限制。
+                  {isIOS() && ' iOS設備需要用戶手勢才能播放音頻。'}
+                </p>
+                <Link 
+                  to="/mobile-voice-test" 
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  前往診斷頁面
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Voice Selection */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-6">
