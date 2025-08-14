@@ -15,7 +15,7 @@ interface PopupProviderProps {
 export const PopupProvider: React.FC<PopupProviderProps> = ({ children }) => {
   const [popupsEnabled, setPopupsEnabled] = useState<boolean>(() => {
     const saved = localStorage.getItem('popupsEnabled');
-    return saved !== null ? JSON.parse(saved) : false;
+    return saved !== null ? JSON.parse(saved) : true; // 改為 true
   });
 
   useEffect(() => {
