@@ -4,6 +4,7 @@ import { useStoryStore } from '../store/storyStore'
 import { generateStory } from '../services/storyService'
 import { ArrowLeft, Sparkles, Plus, X, Shuffle } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePopup } from '../contexts/PopupContext'
 
 const characters = [
   { id: 'rabbit', name: '小兔子', emoji: '🐰', color: 'bg-pink-100 hover:bg-pink-200' },
@@ -48,6 +49,7 @@ const plots = [
 ]
 
 export default function StoryCreator() {
+  const { showToast } = usePopup()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { selectedElements, setSelectedElement, setCurrentStory, addToHistory } = useStoryStore()
@@ -116,7 +118,7 @@ export default function StoryCreator() {
 
   const handleAddCharacter = () => {
     if (!newCharacter.name.trim() || !newCharacter.emoji) {
-      toast.error('請填寫角色名稱並選擇表情符號！')
+      showToast('error', '請填寫角色名稱並選擇表情符號！')
       return
     }
 
@@ -131,7 +133,7 @@ export default function StoryCreator() {
     setCustomCharacters(prev => [...prev, character])
     setNewCharacter({ name: '', emoji: '', color: 'bg-pink-100 hover:bg-pink-200' })
     setShowAddCharacterModal(false)
-    toast.success(`成功添加角色「${character.name}」！`)
+    showToast('success', `成功添加角色「${character.name}」！`)
   }
 
   const handleRemoveCustomCharacter = (characterId: string) => {
@@ -140,7 +142,7 @@ export default function StoryCreator() {
     if (selectedElements.character === characterId) {
       setSelectedElement('character', '')
     }
-    toast.success('角色已移除！')
+    showToast('success', '角色已移除！')
   }
 
   // Function to randomly select all story elements
@@ -155,14 +157,14 @@ export default function StoryCreator() {
     setSelectedElement('theme', randomTheme.id)
     setSelectedElement('plot', randomPlot.id)
     
-    toast.success('已隨機選擇故事元素！您可以修改任何選項。')
+    showToast('success', '已隨機選擇故事元素！您可以修改任何選項。')
   }
 
   const handleGenerateStory = async () => {
     const { character, scene, theme, plot } = selectedElements
     
     if (!character || !scene || !theme || !plot) {
-      toast.error('請選擇所有故事元素！')
+      showToast('error', '請選擇所有故事元素！')
       return
     }
 
@@ -185,20 +187,11 @@ export default function StoryCreator() {
         const missingCount = story.zhuyinCheck.missingChars.length
         const missingChars = story.zhuyinCheck.missingChars.join('、')
         
-        toast.warning(
-          `注音映射表檢查：發現 ${missingCount} 個字符缺少注音標記\n缺少的字符：${missingChars}\n\n故事已生成，但部分字符可能無法顯示注音。`,
-          {
-            duration: 8000,
-            style: {
-              maxWidth: '500px',
-              whiteSpace: 'pre-line'
-            }
-          }
-        )
+        showToast('info', `注音映射表檢查：發現 ${missingCount} 個字符缺少注音標記\n缺少的字符：${missingChars}\n\n故事已生成，但部分字符可能無法顯示注音。`)
       } else if (story.zhuyinCheck?.hasFullCoverage) {
-        toast.success('故事生成成功！所有字符都有完整的注音標記。')
+        showToast('success', '故事生成成功！所有字符都有完整的注音標記。')
       } else {
-        toast.success('故事生成成功！')
+        showToast('success', '故事生成成功！')
       }
       
       setCurrentStory(story)
@@ -206,7 +199,7 @@ export default function StoryCreator() {
       
       navigate('/story')
     } catch (error) {
-      toast.error('故事生成失敗，請重試')
+      showToast('error', '故事生成失敗，請重試')
     } finally {
       setIsGenerating(false)
     }

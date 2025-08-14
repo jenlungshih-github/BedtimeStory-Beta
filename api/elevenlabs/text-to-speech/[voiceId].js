@@ -26,7 +26,10 @@ module.exports = async function handler(req, res) {
     voice_settings,
     timestamp: new Date().toISOString(),
     userAgent: req.headers['user-agent'],
-    origin: req.headers.origin
+    origin: req.headers.origin,
+    environment: process.env.VERCEL_ENV || 'development',
+    hasApiKey: !!process.env.ELEVENLABS_API_KEY,
+    apiKeyLength: process.env.ELEVENLABS_API_KEY?.length || 0
   });
 
   if (!voiceId || !text) {
@@ -37,10 +40,28 @@ module.exports = async function handler(req, res) {
   // Check if API key is configured
   if (!process.env.ELEVENLABS_API_KEY) {
     console.error('❌ ELEVENLABS_API_KEY not configured');
+    console.error('Environment variables available:', Object.keys(process.env).filter(key => key.includes('ELEVEN')));
     return res.status(500).json({ 
-      error: 'ELEVENLABS_API_KEY environment variable is not configured in Vercel. Please add it in your Vercel project settings.' 
+      error: 'ELEVENLABS_API_KEY environment variable is not configured in Vercel. Please add it in your Vercel project settings.',
+      code: 'MISSING_API_KEY',
+      details: {
+        environment: process.env.VERCEL_ENV || 'development',
+        availableEnvVars: Object.keys(process.env).filter(key => key.includes('ELEVEN')),
+        instructions: 'Go to Vercel Dashboard > Project Settings > Environment Variables and add ELEVENLABS_API_KEY'
+      }
     });
   }
+
+  // Validate API key format
+  if (!process.env.ELEVENLABS_API_KEY.startsWith('sk_')) {
+    console.error('❌ Invalid ELEVENLABS_API_KEY format');
+    return res.status(500).json({ 
+      error: 'Invalid ELEVENLABS_API_KEY format. API key should start with "sk_"',
+      code: 'INVALID_API_KEY_FORMAT'
+    });
+  }
+
+  console.log('✅ ELEVENLABS_API_KEY configured correctly');
 
   try {
     const startTime = Date.now();

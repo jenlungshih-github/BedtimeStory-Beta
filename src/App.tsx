@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
+import { PopupProvider, usePopup } from './contexts/PopupContext'
 import Home from './pages/Home'
 import StoryCreator from './pages/StoryCreator'
 import StoryReader from './pages/StoryReader'
@@ -8,7 +9,9 @@ import TextSettings from './pages/TextSettings'
 import CharacterSelection from './pages/CharacterSelection'
 import MobileVoiceTest from './pages/MobileVoiceTest'
 
-function App() {
+const AppContent = () => {
+  const { popupsEnabled } = usePopup();
+  
   return (
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-sky-100 via-pink-50 to-yellow-50">
@@ -21,10 +24,18 @@ function App() {
           <Route path="/character-selection" element={<CharacterSelection />} />
           <Route path="/mobile-voice-test" element={<MobileVoiceTest />} />
         </Routes>
-        <Toaster position="top-center" richColors />
+        {popupsEnabled && <Toaster position="top-center" richColors />}
       </div>
     </Router>
-  )
+  );
+};
+
+function App() {
+  return (
+    <PopupProvider>
+      <AppContent />
+    </PopupProvider>
+  );
 }
 
 export default App

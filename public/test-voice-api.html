@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>語音API測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        .info {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔊 語音API測試工具</h1>
+        <p>這個工具用來測試語音生成API是否正常工作</p>
+        
+        <div>
+            <button onclick="testLocalAPI()">測試本地API (localhost:3001)</button>
+            <button onclick="testProductionAPI()">測試生產環境API (/api/elevenlabs)</button>
+            <button onclick="clearLog()">清除日誌</button>
+        </div>
+        
+        <div id="log" class="log">點擊按鈕開始測試...
+</div>
+        
+        <audio id="audioPlayer" controls style="width: 100%; margin-top: 20px; display: none;"></audio>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const audioPlayer = document.getElementById('audioPlayer');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            log.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function clearLog() {
+            log.innerHTML = '日誌已清除\n';
+        }
+        
+        async function testAPI(baseUrl, label) {
+            addLog(`開始測試 ${label}...`);
+            
+            const testText = '測試語音生成功能';
+            const voiceId = 'hkfHEbBvdQFNX4uWHqRF'; // Stacy voice
+            
+            const requestData = {
+                text: testText,
+                model_id: 'eleven_multilingual_v2',
+                voice_settings: {
+                    stability: 0.5,
+                    similarity_boost: 0.75,
+                    style: 0.5,
+                    use_speaker_boost: true
+                }
+            };
+            
+            addLog(`請求URL: ${baseUrl}/text-to-speech/${voiceId}`);
+            addLog(`請求數據: ${JSON.stringify(requestData, null, 2)}`);
+            
+            try {
+                const startTime = Date.now();
+                
+                const response = await fetch(`${baseUrl}/text-to-speech/${voiceId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'audio/mpeg'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const requestTime = Date.now() - startTime;
+                addLog(`請求完成，耗時: ${requestTime}ms`);
+                addLog(`響應狀態: ${response.status} ${response.statusText}`);
+                addLog(`響應頭: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    addLog(`錯誤響應內容: ${errorText}`, 'error');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const blob = await response.blob();
+                addLog(`音頻數據大小: ${blob.size} bytes`, 'success');
+                addLog(`音頻數據類型: ${blob.type}`, 'success');
+                
+                if (blob.size === 0) {
+                    addLog('❌ 收到空的音頻數據！', 'error');
+                    return;
+                }
+                
+                if (blob.size < 100) {
+                    addLog(`⚠️ 音頻文件過小: ${blob.size} bytes，可能有問題`, 'error');
+                }
+                
+                // 檢查音頻文件頭
+                const arrayBuffer = await blob.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                const header = Array.from(uint8Array.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                addLog(`音頻文件頭: ${header}`);
+                
+                // 檢查是否為有效的音頻格式
+                if (uint8Array[0] === 0xFF && (uint8Array[1] & 0xE0) === 0xE0) {
+                    addLog('✅ 檢測到有效的MP3格式', 'success');
+                } else if (uint8Array[0] === 0x52 && uint8Array[1] === 0x49 && uint8Array[2] === 0x46 && uint8Array[3] === 0x46) {
+                    addLog('✅ 檢測到有效的WAV格式', 'success');
+                } else {
+                    addLog('⚠️ 未檢測到標準音頻格式標識', 'error');
+                }
+                
+                // 嘗試播放音頻
+                const audioUrl = URL.createObjectURL(blob);
+                audioPlayer.src = audioUrl;
+                audioPlayer.style.display = 'block';
+                addLog('✅ 音頻已載入到播放器，可以點擊播放測試', 'success');
+                
+                // 清理URL
+                audioPlayer.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                };
+                
+            } catch (error) {
+                addLog(`❌ 測試失敗: ${error.message}`, 'error');
+                console.error('API測試錯誤:', error);
+            }
+        }
+        
+        function testLocalAPI() {
+            testAPI('http://localhost:3001/api/elevenlabs', '本地API');
+        }
+        
+        function testProductionAPI() {
+            testAPI('/api/elevenlabs', '生產環境API');
+        }
+        
+        // 頁面載入時顯示環境信息
+        window.onload = function() {
+            addLog('🌐 環境信息:');
+            addLog(`用戶代理: ${navigator.userAgent}`);
+            addLog(`在線狀態: ${navigator.onLine ? '在線' : '離線'}`);
+            addLog(`當前URL: ${window.location.href}`);
+            addLog(`是否為HTTPS: ${window.location.protocol === 'https:' ? '是' : '否'}`);
+        };
+    </script>
+</body>
+</html>

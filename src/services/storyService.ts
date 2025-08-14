@@ -133,13 +133,16 @@ export const generateSpeech = async (text: string, voice: string, pitch: number 
     console.log(`🔊 Generating speech for text: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
     console.log(`Voice ID: ${voiceId}, Pitch: ${pitch}, Speed: ${speed}`);
     console.log(`API URL: ${ELEVENLABS_BASE_URL}/text-to-speech/${voiceId}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
+    console.log(`User Agent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'Server'}`);
+    console.log(`Online Status: ${typeof navigator !== 'undefined' ? navigator.onLine : 'Unknown'}`);
     
     const requestConfig = {
       headers: {
         'Accept': 'audio/mpeg',
         'Content-Type': 'application/json'
       },
-      responseType: 'blob' as const,
+      responseType: 'arraybuffer' as const, // Use arraybuffer instead of blob for better compatibility
       timeout: 30000, // 30 second timeout for mobile networks
       // Add retry configuration for mobile networks
       validateStatus: (status: number) => status < 500, // Don't throw for 4xx errors
@@ -161,6 +164,10 @@ export const generateSpeech = async (text: string, voice: string, pitch: number 
     console.log('📤 Sending request to ElevenLabs API...');
     const startTime = Date.now();
     
+    console.log(`📤 Making API request to: ${ELEVENLABS_BASE_URL}/text-to-speech/${voiceId}`);
+    console.log(`📤 Request data:`, JSON.stringify(requestData, null, 2));
+    console.log(`📤 Request config:`, JSON.stringify(requestConfig, null, 2));
+    
     const response = await axios.post(
       `${ELEVENLABS_BASE_URL}/text-to-speech/${voiceId}`,
       requestData,
@@ -170,27 +177,33 @@ export const generateSpeech = async (text: string, voice: string, pitch: number 
     const requestTime = Date.now() - startTime;
     console.log(`✅ API request completed in ${requestTime}ms`);
     console.log(`Response status: ${response.status}`);
-    console.log(`Response size: ${response.data.size} bytes`);
-    console.log(`Response type: ${response.data.type}`);
     
     // Enhanced audio data validation
-    if (!response.data) {
+    const audioData = response.data as ArrayBuffer;
+    
+    if (!audioData) {
       console.error('❌ No response data received');
       throw new Error('未收到任何響應數據')
     }
     
-    if (response.data.size === 0) {
+    if (audioData.byteLength === 0) {
       console.error('❌ Empty audio data received');
       throw new Error('收到空的音頻數據')
     }
     
-    if (response.data.size < 100) {
-      console.warn(`⚠️ Suspiciously small audio file: ${response.data.size} bytes`);
+    if (audioData.byteLength < 100) {
+      console.warn(`⚠️ Suspiciously small audio file: ${audioData.byteLength} bytes`);
     }
     
+    console.log(`Response size: ${audioData.byteLength} bytes`);
+    
+    // Convert ArrayBuffer to Blob
+    const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
+    console.log(`Response type: ${audioBlob.type}`);
+    
     // Verify blob type
-    if (response.data.type && !response.data.type.includes('audio')) {
-      console.warn(`⚠️ Unexpected content type: ${response.data.type}`);
+    if (audioBlob.type && !audioBlob.type.includes('audio')) {
+      console.warn(`⚠️ Unexpected content type: ${audioBlob.type}`);
       // Don't throw error, as some servers might not set correct content-type
     }
     
@@ -200,17 +213,45 @@ export const generateSpeech = async (text: string, voice: string, pitch: number 
       
       // Check if blob can be converted to URL (basic validation)
       try {
-        const testUrl = URL.createObjectURL(response.data);
+        const testUrl = URL.createObjectURL(audioBlob);
+        
+        // Test if the URL is valid
+        if (!testUrl || !testUrl.startsWith('blob:')) {
+          throw new Error('Invalid blob URL generated')
+        }
+        
         URL.revokeObjectURL(testUrl);
         console.log('✅ Audio blob URL creation test passed');
       } catch (urlError) {
         console.error('❌ Audio blob URL creation failed:', urlError);
         throw new Error('音頻數據格式錯誤，無法在移動設備上播放')
       }
+      
+      // Additional check for audio blob header
+      try {
+        const arrayBuffer = await audioBlob.arrayBuffer()
+        const uint8Array = new Uint8Array(arrayBuffer)
+        
+        // Check for MP3 header (ID3 or sync frame)
+        const hasMP3Header = (
+          (uint8Array[0] === 0x49 && uint8Array[1] === 0x44 && uint8Array[2] === 0x33) || // ID3
+          (uint8Array[0] === 0xFF && (uint8Array[1] & 0xE0) === 0xE0) // MP3 sync frame
+        )
+        
+        if (!hasMP3Header) {
+          console.warn('⚠️ Audio data may not be valid MP3 format')
+          // Don't throw error, just warn
+        } else {
+          console.log('✅ Valid MP3 header detected')
+        }
+      } catch (headerError) {
+        console.warn('⚠️ Could not validate audio header:', headerError)
+        // Don't throw error for header validation failure
+      }
     }
     
     console.log('✅ Audio data validation passed');
-    return response.data
+    return audioBlob
   } catch (error: any) {
     console.error('❌ Error generating speech:', error)
     
@@ -243,29 +284,39 @@ export const generateSpeech = async (text: string, voice: string, pitch: number 
     // Handle HTTP errors
     if (error.response) {
       const status = error.response.status
+      const responseData = error.response.data
+      
+      // Check for specific API configuration errors
+      if (responseData?.code === 'MISSING_API_KEY') {
+        throw new Error('❌ Vercel環境變量未配置：ELEVENLABS_API_KEY缺失。請在Vercel項目設置中添加此環境變量。')
+      }
+      
+      if (responseData?.code === 'INVALID_API_KEY_FORMAT') {
+        throw new Error('❌ API密鑰格式錯誤：密鑰應以"sk_"開頭。請檢查Vercel環境變量配置。')
+      }
       
       if (status === 401) {
-        throw new Error('語音服務認證失敗，請檢查API密鑰設定')
+        throw new Error('❌ 語音服務認證失敗：API密鑰無效。請檢查Vercel項目設置中的ELEVENLABS_API_KEY環境變量。')
       }
       
       if (status === 403) {
-        throw new Error('無權限訪問語音服務，請檢查API密鑰')
+        throw new Error('❌ 無權限訪問語音服務：API密鑰權限不足。請檢查ElevenLabs賬戶狀態。')
       }
       
       if (status === 429) {
-        throw new Error('API請求過於頻繁，請稍後再試')
+        throw new Error('⏰ API請求過於頻繁，請稍後再試')
       }
       
       if (status === 422) {
-        throw new Error('請求參數錯誤，請檢查文本內容')
+        throw new Error('📝 請求參數錯誤，請檢查文本內容')
       }
       
       if (status >= 500) {
-        throw new Error('語音服務暫時無法使用，請稍後再試')
+        throw new Error('🔧 語音服務暫時無法使用，請稍後再試')
       }
       
       if (status >= 400) {
-        throw new Error(`語音服務錯誤 (${status})，請稍後再試`)
+        throw new Error(`❌ 語音服務錯誤 (${status})，請稍後再試`)
       }
     }
     

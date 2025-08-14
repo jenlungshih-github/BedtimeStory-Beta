@@ -5,6 +5,7 @@ import { getAvailableVoices, generateSpeech, getAvailableVoicesSync } from '../s
 import { ArrowLeft, Play, Volume2, Loader2, Smartphone, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { isIOS, isMobile, logMobileInfo, testAudioSupport } from '../utils/mobileDebug'
+import { usePopup } from '../contexts/PopupContext'
 
 const sampleText = '小兔子在森林裡遇到了一隻迷路的小鳥，決定幫助它找到回家的路。'
 
@@ -18,6 +19,7 @@ interface Voice {
 }
 
 export default function VoiceSettings() {
+  const { showToast } = usePopup()
   const { voiceSettings, setVoiceSettings } = useStoryStore()
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null)
@@ -31,10 +33,10 @@ export default function VoiceSettings() {
         setIsLoadingVoices(true)
         const elevenLabsVoices = await getAvailableVoices()
         setVoices(elevenLabsVoices)
-        toast.success('已載入 ElevenLabs 語音選項')
+        showToast('success', '已載入 ElevenLabs 語音選項')
       } catch (error) {
         console.error('Failed to fetch ElevenLabs voices:', error)
-        toast.error('載入語音選項失敗，使用預設選項。如果是在 Vercel 部署，請檢查 ELEVENLABS_API_KEY 環境變數設定。')
+        showToast('error', '載入語音選項失敗，使用預設選項。如果是在 Vercel 部署，請檢查 ELEVENLABS_API_KEY 環境變數設定。')
         // Keep using fallback voices
       } finally {
         setIsLoadingVoices(false)
@@ -128,7 +130,7 @@ export default function VoiceSettings() {
           }
         }
         
-        toast.error(errorMsg)
+        showToast('error', errorMsg)
         URL.revokeObjectURL(audioUrl)
       }
       
@@ -156,18 +158,18 @@ export default function VoiceSettings() {
         if (playError.name === 'NotAllowedError') {
           errorMessage = 'iOS需要用戶手勢才能播放音頻，請點擊播放按鈕'
           if (isIOS()) {
-            toast.error('iOS安全限制：請確保在用戶點擊後播放音頻')
+            showToast('error', 'iOS安全限制：請確保在用戶點擊後播放音頻')
           } else {
-            toast.error('瀏覽器阻止自動播放，請點擊播放按鈕')
+            showToast('error', '瀏覽器阻止自動播放，請點擊播放按鈕')
           }
         } else if (playError.name === 'NotSupportedError') {
           errorMessage = '音頻格式不支持'
-          toast.error('您的設備不支持此音頻格式')
+          showToast('error', '您的設備不支持此音頻格式')
         } else if (playError.name === 'AbortError') {
           errorMessage = '播放被中止'
-          toast.error('音頻播放被中止，請重試')
+          showToast('error', '音頻播放被中止，請重試')
         } else {
-          toast.error(`播放失敗: ${playError.message}`)
+          showToast('error', `播放失敗: ${playError.message}`)
         }
         
         console.error(`Play error details: ${playError.name} - ${playError.message}`)
@@ -205,9 +207,9 @@ export default function VoiceSettings() {
       
       // Show mobile-specific help
       if (isMobile()) {
-        toast.error(errorMessage + '\n\n如果問題持續，請嘗試移動端測試頁面進行診斷')
+        showToast('error', errorMessage + '\n\n如果問題持續，請嘗試移動端測試頁面進行診斷')
       } else {
-        toast.error(errorMessage)
+        showToast('error', errorMessage)
       }
     }
   }

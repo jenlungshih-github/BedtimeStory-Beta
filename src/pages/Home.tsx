@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useStoryStore } from '../store/storyStore'
 import { Sparkles, BookOpen, Heart } from 'lucide-react'
 import PinyinTest from '../components/PinyinTest'
+import PopupToggle from '../components/PopupToggle'
 
 export default function Home() {
   const { storyHistory } = useStoryStore()
@@ -115,6 +116,11 @@ export default function Home() {
       <footer className="text-center py-8 px-4 text-gray-500">
         <p>讓每個夜晚都有美好的故事陪伴 💤</p>
       </footer>
+      
+      {/* Popup Toggle - positioned at bottom */}
+      <div className="flex justify-center py-6 px-4">
+        <PopupToggle />
+      </div>
       
       {/* Debug: Pinyin Test Component */}
       <PinyinTest />

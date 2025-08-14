@@ -7,8 +7,10 @@ import { formatTextWithSettings, getFontSizeClass, getMissingZhuyinSuggestions, 
 import { logMobileInfo, testAudioSupport, createMobileAudio, logAudioError, isIOS, isMobile } from '../utils/mobileDebug'
 import { ArrowLeft, Play, Pause, Volume2, Settings, Type, RotateCcw, BookOpen, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePopup } from '../contexts/PopupContext'
 
 export default function StoryReader() {
+  const { showToast } = usePopup()
   const [searchParams] = useSearchParams()
   const storyId = searchParams.get('id')
   
@@ -46,7 +48,7 @@ export default function StoryReader() {
       setZhuyinUpdateKey(prev => prev + 1)
       
       if (result.generatedCount > 0) {
-        toast.success(`自動生成了 ${result.generatedCount} 個注音符號！`)
+        showToast('success', `自動生成了 ${result.generatedCount} 個注音符號！`)
       } else if (result.totalMissing > 0) {
         console.log(`仍有 ${result.totalMissing} 個字符缺少注音`)
       } else {
@@ -104,9 +106,9 @@ export default function StoryReader() {
         } catch (error) {
           logAudioError(error, 'handlePlayPause')
           if (error.name === 'NotAllowedError') {
-            toast.error('請點擊播放按鈕來啟動音頻播放（iOS 安全限制）')
+            showToast('error', '請點擊播放按鈕來啟動音頻播放（iOS 安全限制）')
           } else {
-            toast.error('音頻播放失敗，請重試')
+            showToast('error', '音頻播放失敗，請重試')
           }
         }
       }
@@ -147,7 +149,7 @@ export default function StoryReader() {
         }
       }
       
-      toast.success('語音生成成功！')
+      showToast('success', '語音生成成功！')
     } catch (error) {
       console.error('Voice generation error:', error)
       
@@ -169,7 +171,7 @@ export default function StoryReader() {
         errorMessage = '請求超時，請檢查網絡連接'
       }
       
-      toast.error(errorMessage)
+      showToast('error', errorMessage)
     } finally {
       setIsLoadingAudio(false)
     }
