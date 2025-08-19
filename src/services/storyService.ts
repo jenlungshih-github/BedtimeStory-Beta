@@ -99,6 +99,7 @@ export const generateStory = (elements: StoryElement, customCharacterName?: stri
     content: storyContent,
     elements,
     createdAt: new Date(),
+    comments: [],
     zhuyinCheck
   }
 }
