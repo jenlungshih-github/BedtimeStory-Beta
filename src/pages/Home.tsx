@@ -3,6 +3,7 @@ import { useStoryStore } from '../store/storyStore'
 import { Sparkles, BookOpen, Heart } from 'lucide-react'
 import PinyinTest from '../components/PinyinTest'
 import PopupToggle from '../components/PopupToggle'
+import LatestComment from '../components/LatestComment'
 
 export default function Home() {
   const { storyHistory } = useStoryStore()
@@ -80,6 +81,9 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Latest Comment Section */}
+      <LatestComment />
 
       {/* Features Section */}
       <section className="py-12 px-4 bg-white/50">

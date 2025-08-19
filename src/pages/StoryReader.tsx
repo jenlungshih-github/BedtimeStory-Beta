@@ -8,6 +8,8 @@ import { logMobileInfo, testAudioSupport, createMobileAudio, logAudioError, isIO
 import { ArrowLeft, Play, Pause, Volume2, Settings, Type, RotateCcw, BookOpen, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { usePopup } from '../contexts/PopupContext'
+import CommentList from '../components/CommentList'
+import AddComment from '../components/AddComment'
 
 export default function StoryReader() {
   const { showToast } = usePopup()
@@ -408,6 +410,13 @@ MP3支持: ${audioSupport.formats.mp3 ? '✓' : '✗'}
         crossOrigin="anonymous"
       />
       
+      {/* Comments Section */}
+      {story && (
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+          <CommentList comments={story.comments || []} />
+          <AddComment storyId={story.id} />
+        </div>
+      )}
 
       
       {/* Bottom Padding for Fixed Controls */}
